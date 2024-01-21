@@ -414,7 +414,7 @@ function App() {
 
   return (
     <PanelGroup direction="horizontal" className="w-full h-full min-h-screen flex">
-      <Panel defaultSize={35} minSize={35} className="flex bg-[#f7f7f7] relative w-full flex-col justify-between shadow-lg">
+      <Panel defaultSize={35} minSize={35} className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-[#f7f7f7] relative w-full flex-col justify-between shadow-lg`}>
         <div className="flex flex-col h-full max-h-screen p-5">
           <div className="flex flex-col space-y-6 mb-2">
             <div className="w-full flex justify-between">
@@ -428,7 +428,7 @@ function App() {
                 <FriendBubble r={r} handleClick={() => handleBubble(r)} />
               ))}
             </div>
-            <div className="w-full flex space-x-1 justify-center items-center">
+            <div className="w-full flex space-x-1 justify-center items-center text-sm md:text-base">
               <div className="w-[50%] flex justify-center py-2 cursor-pointer bg-[#ededed] rounded-lg hover:bg-[#dedede]">
                 <p>Chats</p>
               </div>
@@ -449,7 +449,7 @@ function App() {
           <img src={drag} className="w-full h-full" alt="Resize" />
         </div>
       </PanelResizeHandle>
-      <Panel minSize={35} className={(isChatOpened ? "hidden md:block w-full max-h-screen" : "hidden md:flex justify-center items-center w-full max-h-screen")}>
+      <Panel minSize={35} className={(isChatOpened ? "w-full max-h-screen" : "hidden md:flex justify-center items-center w-full max-h-screen")}>
         {
           isChatOpened ? (
             <ChatBox formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} hideChat={hideChat} />

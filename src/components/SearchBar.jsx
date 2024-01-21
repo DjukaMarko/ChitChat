@@ -77,7 +77,7 @@ export const SearchBar = ({ usersRef }) => {
                 <input
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    className="outline-0 border-0 w-full bg-[#fff] placeholder-gray-400 group-hover:bg-gray-100"
+                    className="text-sm md:text-base outline-0 border-0 w-full bg-[#fff] placeholder-gray-400 group-hover:bg-gray-100"
                     type="text"
                     placeholder="Search"
                 />

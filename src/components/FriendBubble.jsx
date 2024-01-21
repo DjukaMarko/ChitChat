@@ -8,7 +8,7 @@ export const FriendBubble = ({ r, handleClick }) => {
                 <img src={r?.photoUrl} className="w-[4rem] h-[4rem] rounded-full" />
                 {r?.activityStatus === "online" && <div className="absolute bottom-0 w-[1.2rem] h-[1.2rem] border-[3px] border-white rounded-full bg-red-600"></div>}
             </div>
-            <p className="text-[13px]">{r?.display_name}</p>
+            <p className="text-xs md:text-[13px]">{r?.display_name}</p>
         </div>
     )
 }

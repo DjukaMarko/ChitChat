@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { auth, db } from "../config/firebase"
 import adduser from "../../public/add-user.png"
 import sendmessage from "../../public/send-message.png"
+import exitchat from "../../public/exitchat.png"
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 
@@ -121,12 +122,13 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="w-full h-[95%] overflow-y-scroll rounded-md flex flex-col-reverse pt-[10%] pb-[2%]">
-                <div className="w-full bg-[#f7f7f7] flex items-center justify-between absolute px-8 py-4 top-0 z-10">
+                className="w-full h-[95%] overflow-y-scroll rounded-md flex flex-col-reverse pb-[2%]">
+                <div className="w-full bg-[#f7f7f7] flex items-center justify-between absolute py-4 px-8 top-0 z-10">
                     <div className="flex items-center space-x-4">
+                        <img onClick={hideChat} src={exitchat} className="w-[24px] h-[24px] md:w-[32px] md:h-[32px] cursor-pointer md:hidden" />
                         {(typeof activeChatData.members !== 'undefined') ?
                             <>
-                                <img src={activeChatData?.members[0]?.photoUrl} className="w-[64px] h-[64px] rounded-full" />
+                                <img src={activeChatData?.members[0]?.photoUrl} className="w-[48px] h-[48px] md:w-[64px] md:h-[64px] rounded-full" />
                                 <div className="flex flex-col">
                                     <p>{activeChatData?.members[0]?.display_name}</p>
                                     {(activeChatData?.members?.length === 1) && <p className="text-xs">{activeChatData?.members[0]?.activityStatus}</p>}
@@ -148,7 +150,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                     if (m.sentBy == auth?.currentUser?.uid) {
                         return <div key={index} className="w-full bg-white flex items-end justify-end px-5 py-2">
                             <div className="bg-blue-500 py-2 px-4 m-2 rounded-xl relative">
-                                <p className="text-white font-[600]">{m.message}</p>
+                                <p className="text-white font-[600] text-sm md:text-base">{m.message}</p>
                                 <p className="text-xs absolute bottom-[-16px] right-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
                             </div>
                             <img className="w-[42px] h-[42px] rounded-full" src={auth?.currentUser?.photoURL} />
@@ -158,20 +160,20 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                         return <div key={index} className="w-full bg-white flex justify-start items-end px-5 py-2">
                             <img className="w-[42px] h-[42px] rounded-full" src={otherMember?.photoUrl} />
                             <div className="bg-red-500 py-2 px-4 m-2 relative rounded-xl">
-                                <p className="text-white font-[600]">{m.message}</p>
+                                <p className="text-white font-[600] text-sm md:text-base">{m.message}</p>
                                 <p className="text-xs absolute bottom-[-16px] left-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
                             </div>
                         </div>
                     }
                 })}
-                <div className="w-full flex justify-center p-8">
-                    <p>You have started a new conversation!</p>
+                <div className="w-full flex justify-center py-[200px]">
+                    <p className="text-sm md:text-md">You have started a new conversation!</p>
                 </div>
 
             </div>
             <div className="w-full h-[5%] bg-[#f7f7f7] px-6 py-2 flex space-x-4">
                 <form className="flex space-x-6 w-full">
-                    <input value={textValue} onChange={addText} type="text" className="p-1 hover:bg-[#e8e8e8] rounded-lg px-5 w-full" placeholder="Type text..." />
+                    <input value={textValue} onChange={addText} type="text" className="text-sm md:text-base p-1 hover:bg-[#e8e8e8] rounded-lg px-5 w-full" placeholder="Type text..." />
                     <button type="submit" onClick={sendMessage} className="bg-white rounded-full hover:bg-[#e8e8e8] py-1 px-5 text-sm hover:bg-[#f0f0f0]"><img src={sendmessage} className="w-[16px] h-[16px]" /></button>
                 </form>
             </div>
