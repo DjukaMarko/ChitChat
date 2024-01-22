@@ -6,7 +6,8 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db, real_db } from "./config/firebase";
 import drag from "../public/drag.png"
 import moment from 'moment';
-import emptycart from "../public/empty-cart.png"
+import emptycart from "../public/undraw_blank_canvas.svg"
+import emptychat from "../public/undraw_empty_sidebar.svg"
 import signout from "../public/logout.png"
 import hamburger from "../public/hamburger.png"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -35,6 +36,7 @@ import { ChatBox } from "./components/ChatBox";
 import { SearchBar } from "./components/SearchBar";
 import { ChatHistory } from "./components/ChatHistory";
 import { FriendBubble } from "./components/FriendBubble";
+import { isEqual } from "lodash";
 
 const cookies = new Cookies();
 function App() {
@@ -45,6 +47,7 @@ function App() {
   const [isChatOpened, setChatOpen] = useState(false);
   const [currentGroupId, setCurrentGroupId] = useState("");
   const [activeChatData, setActiveChatData] = useState({});
+  const [selectedChat, setSelectedChat] = useState({});
 
   const usersRef = collection(db, "users");
   if (!isAuth) {
@@ -382,6 +385,7 @@ function App() {
 
   const handleChatByGroupId = async (id, item) => {
     setCurrentGroupId(id);
+    setSelectedChat(item);
     setActiveChatData(item);
     setChatOpen(true);
   }
@@ -390,6 +394,7 @@ function App() {
   const hideChat = () => {
     setChatOpen(false)
     setCurrentGroupId("");
+    setSelectedChat({});
   }
 
   const formatTimeAgo = (timestamp) => {
@@ -414,12 +419,12 @@ function App() {
 
   return (
     <PanelGroup direction="horizontal" className="w-full h-full min-h-screen flex">
-      <Panel defaultSize={35} minSize={35} className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-[#f7f7f7] relative w-full flex-col justify-between shadow-lg`}>
-        <div className="flex flex-col h-full max-h-screen p-5">
-          <div className="flex flex-col space-y-6 mb-2">
+      <Panel defaultSize={25} minSize={25} className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] relative w-full flex-col justify-between shadow-lg`}>
+        <div className="flex flex-col h-full max-h-screen">
+          <div className="flex flex-col space-y-6 p-5">
             <div className="w-full flex justify-between">
-              <div className="cursor-pointer"><img src={hamburger} className="w-[20px] h-[20px]" /></div>
-              <div onClick={handleSignOut} className="cursor-pointer"><img src={signout} className="w-[20px] h-[20px]" /></div>
+              <div className="cursor-pointer bg-[#f7f7f7] hover:bg-[#f0f0f0] rounded-full p-2"><img src={hamburger} className="w-[20px] h-[20px]" /></div>
+              <div onClick={handleSignOut} className="cursor-pointer flex items-center justify-center bg-[#f7f7f7] hover:bg-[#f0f0f0] rounded-full p-2"><img src={signout} className="w-[18px] h-[16px]" /></div>
             </div>
             <SearchBar usersRef={usersRef} />
             <div className="flex w-full min-h-[6rem] space-x-4 overflow-x-auto">
@@ -429,23 +434,28 @@ function App() {
               ))}
             </div>
             <div className="w-full flex space-x-1 justify-center items-center text-sm md:text-base">
-              <div className="w-[50%] flex justify-center py-2 cursor-pointer bg-[#ededed] rounded-lg hover:bg-[#dedede]">
+              <div className="w-[50%] flex justify-center py-2 cursor-pointer bg-[#f7f7f7] rounded-lg hover:bg-[#f0f0f0]">
                 <p>Chats</p>
               </div>
-              <div className="w-[50%] flex justify-center py-2 cursor-pointer rounded-lg hover:bg-[#dedede]">
+              <div className="w-[50%] flex justify-center py-2 cursor-pointer rounded-lg hover:bg-[#f0f0f0]">
                 <p>Chits</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center flex-col space-y-1 overflow-y-auto mt-2">
+          <div className="flex items-center flex-col space-y-1 h-full overflow-y-auto mt-2 p-5 border-t-[1px]">
+            {chats.length == 0 && <div className="flex mt-16 flex-col items-center justify-center space-y-6">
+              <img src={emptychat} className="w-[128px] h-[128px]" />
+              <p className="text-sm text-center max-w-[50ch] font-[400] tracking-wider">Shhh... Did you hear that? The chat is whispering for some attention. Time to give it a voice!</p>
+            </div>
+            }
             {chats.map((item, index) => (
-              <ChatHistory formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item?.id, item)} />
+              <ChatHistory isSelected={isEqual(selectedChat, item) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item?.id, item)} />
             ))}
           </div>
         </div>
       </Panel>
       <PanelResizeHandle className="items-center hidden md:flex bg-[#f7f7f7] relative">
-        <div className="absolute right-[-20px] cursor-pointer bg-white p-2 rounded-full w-[36px] h-[36px] z-[1000]">
+        <div className="absolute right-[-20px] cursor-pointer bg-white border-[1px] p-2 rounded-full w-[36px] h-[36px] z-[1000]">
           <img src={drag} className="w-full h-full" alt="Resize" />
         </div>
       </PanelResizeHandle>
@@ -454,11 +464,11 @@ function App() {
           isChatOpened ? (
             <ChatBox formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} hideChat={hideChat} />
           ) :
-            <div className="flex flex-col justify-center items-center space-y-4">
-              <img src={emptycart} className="w-[256px] h-[256px]" />
+            <div className="flex flex-col justify-center items-center space-y-6">
+              <img src={emptycart} className="w-[220px] h-[220px]" />
               <div className="flex flex-col justify-center items-center">
-                <p className="text-xl">Oops, it's too quiet in here! &#x1F60E;</p>
-                <p className="text-md">Start a conversation and break the silence!</p>
+                <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
+                <p className="font-[400] tracking-wide">Start a conversation and break the silence!</p>
               </div>
             </div>
         }

@@ -1,10 +1,10 @@
 import { auth } from "../config/firebase"
 
 
-export const ChatHistory = ({ formatTimeAgo, item, index, handleClick }) => {
+export const ChatHistory = ({ isSelected, formatTimeAgo, item, index, handleClick }) => {
 
     return (
-        <div onClick={handleClick} className="w-full rounded-md p-2 flex space-x-4 hover:bg-gray-200 cursor-default" key={index}>
+        <div onClick={handleClick} className={`w-full ${isSelected ? "bg-[#f7f7f7]" : ""} rounded-xl cursor-pointer p-2 flex space-x-4 hover:bg-[#f0f0f0] cursor-default`} key={index}>
             <img src={item.members[0].photoUrl} className="w-[50px] h-[50px] rounded-full" />
             <div className="flex flex-col justify-center">
                 {item.members.length > 1 ? <p>Group</p> : <p className="text-sm md:text-md">{item.members[0].display_name}</p>}

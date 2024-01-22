@@ -123,7 +123,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 className="w-full h-[95%] overflow-y-scroll rounded-md flex flex-col-reverse pb-[2%]">
-                <div className="w-full bg-[#f7f7f7] flex items-center justify-between absolute py-4 px-8 top-0 z-10">
+                <div className="w-full bg-white border-b-[1px] shadow-sm flex items-center justify-between absolute py-4 px-8 top-0 z-10">
                     <div className="flex items-center space-x-4">
                         <img onClick={hideChat} src={exitchat} className="w-[24px] h-[24px] md:w-[32px] md:h-[32px] cursor-pointer md:hidden" />
                         {(typeof activeChatData.members !== 'undefined') ?
@@ -144,14 +144,16 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                             </>
                         }
                     </div>
-                    <img src={adduser} className="w-[24px] h-[24px] cursor-pointer" />
+                    <div className="w-[35px] h-[35px] bg-[#f7f7f7] hover:bg-[#f0f0f0] rounded-full p-2 cursor-pointer">
+                        <img src={adduser} />
+                    </div>
                 </div>
                 {currentMembers.length > 0 && text.map((m, index) => {
                     if (m.sentBy == auth?.currentUser?.uid) {
                         return <div key={index} className="w-full bg-white flex items-end justify-end px-5 py-2">
-                            <div className="bg-blue-500 py-2 px-4 m-2 rounded-xl relative">
-                                <p className="text-white font-[600] text-sm md:text-base">{m.message}</p>
-                                <p className="text-xs absolute bottom-[-16px] right-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
+                            <div className="bg-red-500 py-2 px-4 m-2 rounded-xl relative">
+                                <p className="text-white font-[600] text-xs md:text-sm">{m.message}</p>
+                                <p className="text-[10px] absolute bottom-[-16px] left-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
                             </div>
                             <img className="w-[42px] h-[42px] rounded-full" src={auth?.currentUser?.photoURL} />
                         </div>
@@ -159,9 +161,9 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                         let otherMember = currentMembers.find(member => member.userId === m.sentBy);
                         return <div key={index} className="w-full bg-white flex justify-start items-end px-5 py-2">
                             <img className="w-[42px] h-[42px] rounded-full" src={otherMember?.photoUrl} />
-                            <div className="bg-red-500 py-2 px-4 m-2 relative rounded-xl">
-                                <p className="text-white font-[600] text-sm md:text-base">{m.message}</p>
-                                <p className="text-xs absolute bottom-[-16px] left-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
+                            <div className="bg-[#f0f0f0] py-2 px-4 m-2 relative rounded-xl">
+                                <p className="text-black text-xs md:text-sm">{m.message}</p>
+                                <p className="text-[10px] absolute bottom-[-16px] right-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
                             </div>
                         </div>
                     }
@@ -171,9 +173,9 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                 </div>
 
             </div>
-            <div className="w-full h-[5%] bg-[#f7f7f7] px-6 py-2 flex space-x-4">
+            <div className="w-full h-[5%] border-t-[1px] px-6 py-2 flex space-x-4">
                 <form className="flex space-x-6 w-full">
-                    <input value={textValue} onChange={addText} type="text" className="text-sm md:text-base p-1 hover:bg-[#e8e8e8] rounded-lg px-5 w-full" placeholder="Type text..." />
+                    <input value={textValue} onChange={addText} type="text" className="text-sm md:text-base p-1 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="I love you :)" />
                     <button type="submit" onClick={sendMessage} className="bg-white rounded-full hover:bg-[#e8e8e8] py-1 px-5 text-sm hover:bg-[#f0f0f0]"><img src={sendmessage} className="w-[16px] h-[16px]" /></button>
                 </form>
             </div>
