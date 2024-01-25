@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { auth, db } from "../config/firebase"
-import adduser from "../../public/add-user.png"
+import threedots from "../../public/threedots.png"
 import sendmessage from "../../public/send-message.png"
 import exitchat from "../../public/exitchat.png"
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
+import { BeatLoader } from "react-spinners";
 
 export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideChat }) => {
 
@@ -12,6 +13,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
     const [text, setText] = useState([]);
     const [textValue, setTextValue] = useState("");
     const [currentMembers, setMembers] = useState([]);
+    const [isMessageLoading, setMessageLoading] = useState(false);
     const scrollContainerRef = useRef();
 
 
@@ -34,7 +36,8 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
 
     useEffect(() => {
         if (currentGroupId === "") return;
-
+        
+        setMessageLoading(true);
         const subcollectionRef = collection(doc(db, "messages", currentGroupId), "message");
         const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(20 + (loadMoreDocs * 20)));
         const unsubscribe = onSnapshot(orderedQuery, (querySnapshot) => {
@@ -43,8 +46,8 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
             querySnapshot.forEach(async (doc) => {
                 setText(prevText => [...prevText, doc.data()])
             });
+            setMessageLoading(false);
         });
-
 
         return () => unsubscribe();
     }, [currentGroupId, loadMoreDocs]);
@@ -104,6 +107,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
         const maxScrollHeight = container.scrollHeight - container.clientHeight;
 
         if ((Math.abs(scrolledFromTop)) >= maxScrollHeight - 2) {
+
             setLoadMoreDocs(prevDocs => prevDocs + 1);
         }
     };
@@ -113,40 +117,47 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
         const hours = date.getHours().toString().padStart(2, '0');
         const minutes = date.getMinutes().toString().padStart(2, '0');
         return `${hours}:${minutes}`;
-      };
+    };
 
-      console.log("active chat data:")
-      console.log(activeChatData)
+    console.log("active chat data:")
+    console.log(activeChatData)
     return (
         <div className="w-full h-full relative">
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 className="w-full h-[95%] overflow-y-scroll rounded-md flex flex-col-reverse pb-[2%]">
-                <div className="w-full bg-white border-b-[1px] shadow-sm flex items-center justify-between absolute py-4 px-8 top-0 z-10">
-                    <div className="flex items-center space-x-4">
-                        <img onClick={hideChat} src={exitchat} className="w-[24px] h-[24px] md:w-[32px] md:h-[32px] cursor-pointer md:hidden" />
-                        {(typeof activeChatData.members !== 'undefined') ?
-                            <>
-                                <img src={activeChatData?.members[0]?.photoUrl} className="w-[48px] h-[48px] md:w-[64px] md:h-[64px] rounded-full" />
-                                <div className="flex flex-col">
-                                    <p>{activeChatData?.members[0]?.display_name}</p>
-                                    {(activeChatData?.members?.length === 1) && <p className="text-xs">{activeChatData?.members[0]?.activityStatus}</p>}
-                                </div>
-                            </>
-                            :
-                            <>
-                                <img src={activeChatData?.photoUrl} className="w-[64px] h-[64px] rounded-full" />
-                                <div className="flex flex-col">
-                                    <p>{activeChatData?.display_name}</p>
-                                    <p className="text-xs">{activeChatData?.activityStatus}</p>
-                                </div>
-                            </>
-                        }
+                <div className="w-full bg-white border-b-[1px] shadow-sm flex flex-col space-y-2 absolute py-4 px-8 top-0 z-10">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                            <img onClick={hideChat} src={exitchat} className="w-[24px] h-[24px] md:w-[32px] md:h-[32px] cursor-pointer md:hidden" />
+                            {(typeof activeChatData.members !== 'undefined') ?
+                                <>
+                                    <img src={activeChatData?.members[0]?.photoUrl} className="w-[48px] h-[48px] md:w-[64px] md:h-[64px] rounded-full" />
+                                    <div className="flex flex-col">
+                                        <p>{activeChatData?.members[0]?.display_name}</p>
+                                        {(activeChatData?.members?.length === 1) && <p className="text-xs">{activeChatData?.members[0]?.activityStatus}</p>}
+                                    </div>
+                                </>
+                                :
+                                <>
+                                    <img src={activeChatData?.photoUrl} className="w-[64px] h-[64px] rounded-full" />
+                                    <div className="flex flex-col">
+                                        <p>{activeChatData?.display_name}</p>
+                                        <p className="text-xs">{activeChatData?.activityStatus}</p>
+                                    </div>
+                                </>
+                            }
+                        </div>
+                        <div className="w-[35px] h-[35px] p-2 cursor-pointer">
+                            <img src={threedots} />
+                        </div>
                     </div>
-                    <div className="w-[35px] h-[35px] bg-[#f7f7f7] hover:bg-[#f0f0f0] rounded-full p-2 cursor-pointer">
-                        <img src={adduser} />
-                    </div>
+                    {isMessageLoading &&
+                        <div className="w-full flex justify-center items-center p-4">
+                            <BeatLoader color="#c91e1e" />
+                        </div>
+                    }
                 </div>
                 {currentMembers.length > 0 && text.map((m, index) => {
                     if (m.sentBy == auth?.currentUser?.uid) {
