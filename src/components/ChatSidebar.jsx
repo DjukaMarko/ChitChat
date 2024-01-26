@@ -7,11 +7,11 @@ import { FriendBubble } from "./FriendBubble";
 import { isEqual } from "lodash";
 
 
-export const ChatSidebar = ({ usersRef, formatTimeAgo, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
+export const ChatSidebar = ({ usersRef, formatTimeAgo, setOtherUser ,removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
     const handleBubble = (r) => {
-        console.log(r);
         setActiveChatData(r);
-        handleChat(r?.username);
+        setOtherUser(r?.display_name);
+        handleChat(r?.display_name);
       }
     
       const handleChatByGroupId = async (id, item) => {
@@ -30,10 +30,10 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, chats, currentFriends, se
                     <div className="cursor-pointer bg-[#f7f7f7] lg:hidden block hover:bg-[#f0f0f0] rounded-full p-2"><img src={hamburger} className="w-[20px] h-[20px]" /></div>
                 </div>
                 <SearchBar usersRef={usersRef} />
-                <div className="flex w-full min-h-[6rem] space-x-4 overflow-x-auto">
+                <div className="flex w-full min-h-[6rem] space-x-6 overflow-x-auto">
                     <FriendBubble r={{ username: auth?.currentUser?.displayName, photoUrl: auth?.currentUser?.photoURL, activityStatus: "online", display_name: "You" }} />
                     {currentFriends.map((r) => (
-                        <FriendBubble r={r} handleClick={() => handleBubble(r)} />
+                        <FriendBubble removeFriend={() => removeFriend(r?.display_name)} r={r} handleClick={() => handleBubble(r)} />
                     ))}
                 </div>
                 <div className="w-full flex space-x-1 justify-center items-center text-sm md:text-base">

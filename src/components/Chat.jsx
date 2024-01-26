@@ -10,7 +10,6 @@ export const Chat = ({ room }) => {
     useEffect(() => {
         const queryMessages = query(collectionRef, where("room" , "==", room), orderBy("createdAt"));
         const unsubscribe = onSnapshot(queryMessages, (snapshot) => {
-            console.log("new message")
             let messages = [];
             snapshot.forEach((doc) => {
                 messages.push({ ...doc.data(), id:doc.id});

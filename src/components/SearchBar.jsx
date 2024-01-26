@@ -9,7 +9,6 @@ export const SearchBar = ({ usersRef }) => {
     const [possibleRequests, setPossibleRequests] = useState([]);
 
     const handleSearchSubmit = async () => {
-        console.log(auth?.currentUser?.displayName);
         try {
           if (searchInput !== "") {
             const q = query(
@@ -34,7 +33,6 @@ export const SearchBar = ({ usersRef }) => {
       };
 
       const handleSendRequest = async (r) => {
-        console.log(r);
         try {
           const q = query(usersRef, where("display_name", "==", r));
           const signed_user = await getDocs(q);

@@ -7,7 +7,7 @@ import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, limit, onSnapshot
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
 
-export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideChat }) => {
+export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideChat, otherUser, setOtherUser }) => {
 
     const [loadMoreDocs, setLoadMoreDocs] = useState(0);
     const [text, setText] = useState([]);
@@ -19,16 +19,17 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
 
     useEffect(() => {
         let foo = async () => {
+            if (currentGroupId) {
+                let query1 = query(collection(db, "group"), where("id", "==", currentGroupId));
+                let groupData = await getDocs(query1);
 
-            let query1 = query(collection(db, "group"), where("id", "==", currentGroupId));
-            let groupData = await getDocs(query1);
+                groupData.docs[0].data().members.map(async (m) => {
+                    let query2 = query(collection(db, "users"), where("userId", "==", m));
+                    let userData = await getDocs(query2);
 
-            groupData.docs[0].data().members.map(async (m) => {
-                let query2 = query(collection(db, "users"), where("userId", "==", m));
-                let userData = await getDocs(query2);
-
-                setMembers(prevMember => [...prevMember, userData.docs[0].data()]);
-            })
+                    setMembers(prevMember => [...prevMember, userData.docs[0].data()]);
+                })
+            }
         }
 
         foo();
@@ -36,13 +37,12 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
 
     useEffect(() => {
         if (currentGroupId === "") return;
-        
+
         setMessageLoading(true);
         const subcollectionRef = collection(doc(db, "messages", currentGroupId), "message");
         const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(20 + (loadMoreDocs * 20)));
         const unsubscribe = onSnapshot(orderedQuery, (querySnapshot) => {
             setText([]);
-            console.log("NEW DATA INCOMING:");
             querySnapshot.forEach(async (doc) => {
                 setText(prevText => [...prevText, doc.data()])
             });
@@ -53,12 +53,12 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
     }, [currentGroupId, loadMoreDocs]);
 
 
+    console.log("Other User: " + otherUser)
     const sendMessage = async (e) => {
         e.preventDefault();
         if (textValue === "") return;
 
         setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
-        console.log(currentGroupId);
 
         const q = query(
             collection(db, "messages"),
@@ -75,6 +75,37 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
         await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
             groups: arrayUnion(currentGroupId),
         })
+
+        const q1 = query(
+            collection(db, "users"),
+            where('display_name', '==', otherUser)
+        );
+
+        try {
+            const other_user = await getDocs(q1);
+
+            // Check if any documents are returned
+            if (other_user.docs.length > 0) {
+                console.log(other_user.docs[0].data());
+
+                if (other_user.docs[0].data().groups.indexOf(currentGroupId) === -1) {
+                    console.log("empty");
+                    console.log(currentGroupId);
+                    await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
+                        groups: arrayUnion(currentGroupId)
+                    })
+                    setOtherUser("");
+                } else {
+                    console.log("User is already in the group");
+                }
+            } else {
+                console.log("User not found");
+            }
+        } catch (error) {
+            console.error("Error loading user data:", error);
+        }
+
+
 
         await updateDoc(doc(db, "messages", currentGroupId), {
             lastMessage: textValue,
@@ -118,9 +149,6 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
         const minutes = date.getMinutes().toString().padStart(2, '0');
         return `${hours}:${minutes}`;
     };
-
-    console.log("active chat data:")
-    console.log(activeChatData)
     return (
         <div className="w-full h-full relative">
             <div

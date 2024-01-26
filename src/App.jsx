@@ -50,6 +50,8 @@ function App() {
   const [activeChatData, setActiveChatData] = useState({});
   const [selectedChat, setSelectedChat] = useState({});
 
+  const [otherUser, setOtherUser] = useState("");
+
   const usersRef = collection(db, "users");
   if (!isAuth) {
     return (
@@ -76,8 +78,6 @@ function App() {
           activityStatus: eachMember?.data().activityStatus
         };
       }));
-
-      console.log(allMembers);
 
       let allData = {
         id: group?.data().id,
@@ -131,6 +131,7 @@ function App() {
 
       // Wait for all promises to complete
       await Promise.all([...groupPromises, ...friendsPromises, ...requestsPromises]);
+      
 
     } catch (error) {
       console.error('Error fetching data:', error.message);
@@ -229,9 +230,10 @@ function App() {
 
   const handleAccept = async (r) => {
     try {
+
       const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
 
-      var q2 = query(usersRef, where("username", "==", r));
+      var q2 = query(usersRef, where("display_name", "==", r));
       var signed_user2 = await getDocs(q2);
 
 
@@ -295,11 +297,9 @@ function App() {
         hideChat();
       }
 
-      console.log("hide chat");
       const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
 
-      console.log(r)
-      const q = query(usersRef, where("username", "==", r));
+      const q = query(usersRef, where("display_name", "==", r));
       const other_user = await getDocs(q);
 
       const my_friends = my_user.data().friends;
@@ -330,7 +330,7 @@ function App() {
 
   const getGroup = async (username) => {
 
-    const q_other_user = query(usersRef, where("username", "==", username));
+    const q_other_user = query(usersRef, where("display_name", "==", username));
     const other_user = await getDocs(q_other_user);
 
     const query1 = query(
@@ -350,12 +350,14 @@ function App() {
     const commonGroups = result1.docs.filter(doc1 =>
       result2.docs.some(doc2 => doc1.id === doc2.id)
     );
+
     return [other_user, commonGroups];
   }
 
   const handleChat = async (username) => {
     setChatOpen(true);
 
+    console.log(username)
     const [other_user, commonGroups] = await getGroup(username);
 
     if (commonGroups.length == 0) {
@@ -376,7 +378,6 @@ function App() {
     } else {
       setCurrentGroupId(commonGroups[0].data().id);
     }
-
   }
 
   const hideChat = () => {
@@ -432,16 +433,18 @@ function App() {
                 usersRef={usersRef}
                 formatTimeAgo={(t) => formatTimeAgo(t)}
                 chats={chats}
+                setOtherUser={(v) => setOtherUser(v)}
                 currentFriends={currentFriends}
                 selectedChat={selectedChat}
                 setActiveChatData={(v) => setActiveChatData(v)}
                 handleChat={(v) => handleChat(v)}
                 setChatOpen={(v) => setChatOpen(v)}
+                removeFriend = {(r) => handleRemoveFriend(r)}
                 setCurrentGroupId={(v) => setCurrentGroupId(v)}
                 setSelectedChat={(v) => setSelectedChat(v)}
                 />
               :
-              <RequestsSidebar />
+              <RequestsSidebar requests={f_requests} acceptRequest={(r) => handleAccept(r)} removeRequest={(r) => handleReject(r)} />
 
             }
           </div>
@@ -454,7 +457,7 @@ function App() {
         <Panel minSize={35} className={(isChatOpened ? "w-full max-h-screen" : "hidden md:flex justify-center items-center w-full max-h-screen")}>
           {
             isChatOpened ? (
-              <ChatBox formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} hideChat={hideChat} />
+              <ChatBox formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} hideChat={hideChat} otherUser={otherUser} setOtherUser={setOtherUser} />
             ) :
               <div className="flex flex-col justify-center items-center space-y-6">
                 <img src={emptycart} className="w-[220px] h-[220px]" />
