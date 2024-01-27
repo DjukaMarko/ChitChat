@@ -7,7 +7,7 @@ import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, limit, onSnapshot
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
 
-export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideChat, otherUser, setOtherUser }) => {
+export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideChat }) => {
 
     const [loadMoreDocs, setLoadMoreDocs] = useState(0);
     const [text, setText] = useState([]);
@@ -16,6 +16,42 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
     const [isMessageLoading, setMessageLoading] = useState(false);
     const scrollContainerRef = useRef();
 
+
+    useEffect(() => {
+        const foo = async () => {
+            console.log("alo")
+            console.log("Current ID: " + currentGroupId);
+            if(currentGroupId === "") return
+             await Promise.all(activeChatData.map(async item => {
+                console.log(item);
+                const q1 = query(
+                    collection(db, "users"),
+                    where('display_name', '==', item.display_name)
+                );
+        
+                try {
+                    const other_user = await getDocs(q1);
+        
+                    // Check if any documents are returned
+                    if (other_user.docs.length > 0) {
+                        if (other_user.docs[0].data().groups.indexOf(currentGroupId) === -1) {
+                            await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
+                                groups: arrayUnion(currentGroupId)
+                            })
+                        } else {
+                            console.log("User is already in the group");
+                        }
+                    } else {
+                        console.log("User not found");
+                    }
+                } catch (error) {
+                    console.error("Error loading user data:", error);
+                }
+            }));
+        }
+
+        foo();
+    }, [activeChatData])
 
     useEffect(() => {
         let foo = async () => {
@@ -52,8 +88,6 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
         return () => unsubscribe();
     }, [currentGroupId, loadMoreDocs]);
 
-
-    console.log("Other User: " + otherUser)
     const sendMessage = async (e) => {
         e.preventDefault();
         if (textValue === "") return;
@@ -75,37 +109,6 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
         await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
             groups: arrayUnion(currentGroupId),
         })
-
-        const q1 = query(
-            collection(db, "users"),
-            where('display_name', '==', otherUser)
-        );
-
-        try {
-            const other_user = await getDocs(q1);
-
-            // Check if any documents are returned
-            if (other_user.docs.length > 0) {
-                console.log(other_user.docs[0].data());
-
-                if (other_user.docs[0].data().groups.indexOf(currentGroupId) === -1) {
-                    console.log("empty");
-                    console.log(currentGroupId);
-                    await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
-                        groups: arrayUnion(currentGroupId)
-                    })
-                    setOtherUser("");
-                } else {
-                    console.log("User is already in the group");
-                }
-            } else {
-                console.log("User not found");
-            }
-        } catch (error) {
-            console.error("Error loading user data:", error);
-        }
-
-
 
         await updateDoc(doc(db, "messages", currentGroupId), {
             lastMessage: textValue,
@@ -159,23 +162,13 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <img onClick={hideChat} src={exitchat} className="w-[24px] h-[24px] md:w-[32px] md:h-[32px] cursor-pointer md:hidden" />
-                            {(typeof activeChatData.members !== 'undefined') ?
                                 <>
-                                    <img src={activeChatData?.members[0]?.photoUrl} className="w-[48px] h-[48px] md:w-[64px] md:h-[64px] rounded-full" />
+                                    <img src={activeChatData[0]?.photoUrl} className="w-[64px] h-[64px] rounded-full" />
                                     <div className="flex flex-col">
-                                        <p>{activeChatData?.members[0]?.display_name}</p>
-                                        {(activeChatData?.members?.length === 1) && <p className="text-xs">{activeChatData?.members[0]?.activityStatus}</p>}
+                                        <p>{activeChatData[0]?.display_name}</p>
+                                        <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
                                     </div>
                                 </>
-                                :
-                                <>
-                                    <img src={activeChatData?.photoUrl} className="w-[64px] h-[64px] rounded-full" />
-                                    <div className="flex flex-col">
-                                        <p>{activeChatData?.display_name}</p>
-                                        <p className="text-xs">{activeChatData?.activityStatus}</p>
-                                    </div>
-                                </>
-                            }
                         </div>
                         <div className="w-[35px] h-[35px] p-2 cursor-pointer">
                             <img src={threedots} />

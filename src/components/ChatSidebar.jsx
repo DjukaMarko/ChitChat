@@ -7,17 +7,17 @@ import { FriendBubble } from "./FriendBubble";
 import { isEqual } from "lodash";
 
 
-export const ChatSidebar = ({ usersRef, formatTimeAgo, setOtherUser ,removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
+export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat ,removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
+    
     const handleBubble = (r) => {
-        setActiveChatData(r);
-        setOtherUser(r?.display_name);
+        setActiveChatData([r]);
         handleChat(r?.display_name);
       }
     
-      const handleChatByGroupId = async (id, item) => {
-        setCurrentGroupId(id);
+      const handleChatByGroupId = async (item) => {
+        setCurrentGroupId(item.id);
         setSelectedChat(item);
-        setActiveChatData(item);
+        setActiveChatData(item.members);
         setChatOpen(true);
       }
     
@@ -33,7 +33,7 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, setOtherUser ,removeFrien
                 <div className="flex w-full min-h-[6rem] space-x-6 overflow-x-auto">
                     <FriendBubble r={{ username: auth?.currentUser?.displayName, photoUrl: auth?.currentUser?.photoURL, activityStatus: "online", display_name: "You" }} />
                     {currentFriends.map((r) => (
-                        <FriendBubble removeFriend={() => removeFriend(r?.display_name)} r={r} handleClick={() => handleBubble(r)} />
+                        <FriendBubble key={r?.userId} removeFriend={() => removeFriend(r?.display_name)} r={r} handleClick={() => handleBubble(r)} />
                     ))}
                 </div>
                 <div className="w-full flex space-x-1 justify-center items-center text-sm md:text-base">
@@ -52,7 +52,7 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, setOtherUser ,removeFrien
                 </div>
                 }
                 {chats.map((item, index) => (
-                    <ChatHistory isSelected={isEqual(selectedChat, item) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item?.id, item)} />
+                    <ChatHistory key={item.id} deleteChat={(id) => deleteChat(id)} isSelected={isEqual(selectedChat, item) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item)} />
                 ))}
             </div>
         </>

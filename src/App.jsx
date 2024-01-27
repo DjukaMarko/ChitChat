@@ -50,7 +50,6 @@ function App() {
   const [activeChatData, setActiveChatData] = useState({});
   const [selectedChat, setSelectedChat] = useState({});
 
-  const [otherUser, setOtherUser] = useState("");
 
   const usersRef = collection(db, "users");
   if (!isAuth) {
@@ -75,7 +74,8 @@ function App() {
         return {
           display_name: eachMember?.data().display_name,
           photoUrl: eachMember?.data().photoUrl,
-          activityStatus: eachMember?.data().activityStatus
+          activityStatus: eachMember?.data().activityStatus,
+          id: eachMember?.data().userId,
         };
       }));
 
@@ -87,7 +87,7 @@ function App() {
         members: allMembers
       };
 
-      setChats((prevChats) => [...prevChats, allData]);
+      setChats((prevChats) => [allData, ...prevChats]);
 
       // Use onSnapshot to listen for real-time updates on the messages_db document
       onSnapshot(doc(db, "messages", e), (snapshot) => {
@@ -131,7 +131,7 @@ function App() {
 
       // Wait for all promises to complete
       await Promise.all([...groupPromises, ...friendsPromises, ...requestsPromises]);
-      
+
 
     } catch (error) {
       console.error('Error fetching data:', error.message);
@@ -277,10 +277,11 @@ function App() {
     }
   };
 
-  const handleRemoveFriend = async (r) => {
-    try {
-      if (isChatOpened) {
-        let [_, groupId] = await getGroup(r);
+
+/*
+
+else {
+
         const messagesRef = doc(db, "messages", groupId[0].data().id);
         const messageRef = collection(doc(db, "messages", groupId[0].data().id), "message");
 
@@ -294,32 +295,71 @@ function App() {
         await deleteDoc(messagesRef);
         await deleteDoc(groupRef);
 
-        hideChat();
+
+        const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
+
+        const my_groups = my_user.data().groups;
+        const new_my_groups = my_groups.filter(item => item !== groupId[0].data().id);
+
+        const q = query(usersRef, where("display_name", "==", r));
+        const other_user = await getDocs(q);
+
+        const my_friends = my_user.data().friends;
+        const index = my_friends.indexOf(other_user.docs[0].data().userId);
+        if (index > -1) {
+          my_friends.splice(index, 1);
+        }
+        await updateDoc(doc(db, "users", my_user.data().userId), {
+          friends: my_friends,
+          groups: new_my_groups
+        });
+
+
+        const other_friends = other_user.docs[0].data().friends;
+        const other_groups = other_user.docs[0].data().groups;
+        const new_other_groups = other_groups.filter(item => item !== groupId[0].data().id);
+        const other_index = other_friends.indexOf(auth?.currentUser?.uid);
+        if (other_index > -1) {
+          other_friends.splice(other_index, 1);
+        }
+        await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
+          friends: other_friends,
+          groups: new_other_groups,
+        });
       }
 
-      const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
-
-      const q = query(usersRef, where("display_name", "==", r));
-      const other_user = await getDocs(q);
-
-      const my_friends = my_user.data().friends;
-      const index = my_friends.indexOf(other_user.docs[0].data().userId);
-      if (index > -1) {
-        my_friends.splice(index, 1);
-      }
-      await updateDoc(doc(db, "users", my_user.data().userId), {
-        friends: my_friends,
-      });
+*/
 
 
-      const other_friends = other_user.docs[0].data().friends;
-      const other_index = other_friends.indexOf(auth?.currentUser?.uid);
-      if (other_index > -1) {
-        other_friends.splice(other_index, 1);
-      }
-      await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
-        friends: other_friends,
-      });
+  const handleRemoveFriend = async (r) => {
+    try {
+      if(isChatOpened) hideChat();
+      let [_, groupId] = await getGroup(r);
+      if (groupId.length != 0) {
+        const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
+
+        const q = query(usersRef, where("display_name", "==", r));
+        const other_user = await getDocs(q);
+
+        const my_friends = my_user.data().friends;
+        const index = my_friends.indexOf(other_user.docs[0].data().userId);
+        if (index > -1) {
+          my_friends.splice(index, 1);
+        }
+        await updateDoc(doc(db, "users", my_user.data().userId), {
+          friends: my_friends,
+        });
+
+
+        const other_friends = other_user.docs[0].data().friends;
+        const other_index = other_friends.indexOf(auth?.currentUser?.uid);
+        if (other_index > -1) {
+          other_friends.splice(other_index, 1);
+        }
+        await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
+          friends: other_friends,
+        });
+      } 
 
     } catch (e) {
       console.error(e);
@@ -357,7 +397,6 @@ function App() {
   const handleChat = async (username) => {
     setChatOpen(true);
 
-    console.log(username)
     const [other_user, commonGroups] = await getGroup(username);
 
     if (commonGroups.length == 0) {
@@ -374,8 +413,10 @@ function App() {
 
       // Update the document with the actual ID
       await updateDoc(newDocRef, { id: newDocId });
+      console.log("set!");
       setCurrentGroupId(newDocId);
     } else {
+      console.log("Cmmon groups data: " + commonGroups[0].data().id);
       setCurrentGroupId(commonGroups[0].data().id);
     }
   }
@@ -384,6 +425,17 @@ function App() {
     setChatOpen(false)
     setCurrentGroupId("");
     setSelectedChat({});
+  }
+
+  const deleteChat = async (id) => {
+    console.log(id);
+    hideChat();
+    const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
+    let user_groups = my_user.data().groups;
+    let new_groups = user_groups.filter(item => item !== id);
+    await updateDoc(doc(db, "users", my_user.data().userId), {
+      groups: new_groups,
+    })
   }
 
   const formatTimeAgo = (timestamp) => {
@@ -410,15 +462,15 @@ function App() {
     <div className="w-full h-full min-h-screen relative flex">
       <div className="hidden lg:flex lg:w-[80px] flex-col justify-between h-full min-h-screen border-r-[1px] py-5 px-4">
         <div className="flex flex-col">
-          <div onClick={() => setSelectedSidebar(1)} className={`p-3 space-y-4 cursor-pointer bg-[${selectedSidebar === 1 ? "#f0f0f0" : "#f7f7f7" }] hover:bg-[#f0f0f0] rounded-t-full`}>
+          <div onClick={() => setSelectedSidebar(1)} className={`p-3 space-y-4 cursor-pointer bg-[${selectedSidebar === 1 ? "#f0f0f0" : "#f7f7f7"}] hover:bg-[#f0f0f0] rounded-t-full`}>
             <img src={chaticon} />
           </div>
-          <div onClick={() => setSelectedSidebar(2)} className={`p-3 space-y-4 cursor-pointer bg-[${selectedSidebar === 2 ? "#f0f0f0" : "#f7f7f7" }] hover:bg-[#f0f0f0] rounded-b-full`}>
+          <div onClick={() => setSelectedSidebar(2)} className={`p-3 space-y-4 cursor-pointer bg-[${selectedSidebar === 2 ? "#f0f0f0" : "#f7f7f7"}] hover:bg-[#f0f0f0] rounded-b-full`}>
             <img src={requestsimg} />
           </div>
         </div>
         <div onClick={handleSignOut} className={`p-3 space-y-4 cursor-pointer bg-[#f7f7f7] hover:bg-[#f0f0f0] rounded-full`}>
-          <img src={signout}/>
+          <img src={signout} />
         </div>
       </div>
       <PanelGroup direction="horizontal" className="w-full h-full min-h-screen flex">
@@ -429,22 +481,22 @@ function App() {
               <SkeletonLoader />
               :
               selectedSidebar === 1 ?
-              <ChatSidebar
-                usersRef={usersRef}
-                formatTimeAgo={(t) => formatTimeAgo(t)}
-                chats={chats}
-                setOtherUser={(v) => setOtherUser(v)}
-                currentFriends={currentFriends}
-                selectedChat={selectedChat}
-                setActiveChatData={(v) => setActiveChatData(v)}
-                handleChat={(v) => handleChat(v)}
-                setChatOpen={(v) => setChatOpen(v)}
-                removeFriend = {(r) => handleRemoveFriend(r)}
-                setCurrentGroupId={(v) => setCurrentGroupId(v)}
-                setSelectedChat={(v) => setSelectedChat(v)}
+                <ChatSidebar
+                  usersRef={usersRef}
+                  formatTimeAgo={(t) => formatTimeAgo(t)}
+                  chats={chats}
+                  deleteChat={(id) => deleteChat(id)}
+                  currentFriends={currentFriends}
+                  selectedChat={selectedChat}
+                  setActiveChatData={(v) => setActiveChatData(v)}
+                  handleChat={(v) => handleChat(v)}
+                  setChatOpen={(v) => setChatOpen(v)}
+                  removeFriend={(r) => handleRemoveFriend(r)}
+                  setCurrentGroupId={(v) => setCurrentGroupId(v)}
+                  setSelectedChat={(v) => setSelectedChat(v)}
                 />
-              :
-              <RequestsSidebar requests={f_requests} acceptRequest={(r) => handleAccept(r)} removeRequest={(r) => handleReject(r)} />
+                :
+                <RequestsSidebar requests={f_requests} acceptRequest={(r) => handleAccept(r)} removeRequest={(r) => handleReject(r)} />
 
             }
           </div>
@@ -456,8 +508,8 @@ function App() {
         </PanelResizeHandle>
         <Panel minSize={35} className={(isChatOpened ? "w-full max-h-screen" : "hidden md:flex justify-center items-center w-full max-h-screen")}>
           {
-            isChatOpened ? (
-              <ChatBox formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} hideChat={hideChat} otherUser={otherUser} setOtherUser={setOtherUser} />
+            isChatOpened && currentGroupId !== "" ? (
+              <ChatBox formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} hideChat={hideChat} />
             ) :
               <div className="flex flex-col justify-center items-center space-y-6">
                 <img src={emptycart} className="w-[220px] h-[220px]" />
