@@ -13,7 +13,7 @@ export const FriendBubble = ({ removeFriend, r, handleClick }) => {
                 </div>
             }
             <div onClick={handleClick} className="flex flex-col items-end relative">
-                <img src={r?.photoUrl} className="w-[4rem] h-[4rem] rounded-full" />
+                <img src={r?.photoUrl} referrerPolicy="no-referrer" className="w-[4rem] h-[4rem] rounded-full" />
                 {r?.activityStatus === "online" && <div className="absolute bottom-0 w-[1.2rem] h-[1.2rem] border-[3px] border-white rounded-full bg-red-600"></div>}
             </div>
             <p className="text-xs md:text-[11px]">{r?.display_name}</p>

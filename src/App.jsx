@@ -2,19 +2,15 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import { Auth } from "./components/Auth";
 import Cookies from "universal-cookie";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth, db, real_db } from "./config/firebase";
 import drag from "../public/drag.png"
 import moment from 'moment';
 import emptycart from "../public/undraw_blank_canvas.svg"
-import requestsimg from "../public/requests.png"
-import chaticon from "../public/chaticon.png"
-import signout from "../public/logout.png"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -36,6 +32,7 @@ import { ChatBox } from "./components/ChatBox";
 import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { RequestsSidebar } from "./components/RequestsSidebar";
+import { Sidebar } from "./components/Sidebar";
 
 const cookies = new Cookies();
 function App() {
@@ -50,7 +47,6 @@ function App() {
   const [activeChatData, setActiveChatData] = useState({});
   const [selectedChat, setSelectedChat] = useState({});
 
-
   const usersRef = collection(db, "users");
   if (!isAuth) {
     return (
@@ -60,24 +56,30 @@ function App() {
     );
   }
 
-  let getChats = async (user_db) => {
+  let getChats = async (uid) => {
+    var user_db = await getDoc(doc(db, "users", uid));
     if (!user_db.data().groups) return [];
-    return Promise.all(user_db.data().groups.map(async (e) => {
+
+    const newChats = await Promise.all(user_db.data().groups.map(async (e) => {
       let group = await getDoc(doc(db, "group", e));
       let messages_db = await getDoc(doc(db, "messages", e));
 
-      let allMembers = await Promise.all(group?.data().members.filter((memberId) => {
-        if (memberId === auth?.currentUser?.uid) return false;
-        return true;
-      }).map(async (memberId) => {
-        let eachMember = await getDoc(doc(db, "users", memberId));
-        return {
-          display_name: eachMember?.data().display_name,
-          photoUrl: eachMember?.data().photoUrl,
-          activityStatus: eachMember?.data().activityStatus,
-          id: eachMember?.data().userId,
-        };
-      }));
+      let allMembers = await Promise.all(
+        group?.data().members?.filter((memberId) => {
+          if (memberId === auth?.currentUser?.uid) return false;
+          return true;
+        })?.map(async (memberId) => {
+          // Handle the case where eachMember?.data() might be null or undefined
+          let eachMember = await getDoc(doc(db, "users", memberId));
+          return {
+            display_name: eachMember?.data()?.display_name || "Unknown",
+            photoUrl: eachMember?.data()?.photoUrl || "",
+            activityStatus: eachMember?.data()?.activityStatus || "away",
+            id: eachMember?.data()?.userId || "",
+          };
+        })
+      );
+
 
       let allData = {
         id: group?.data().id,
@@ -87,64 +89,20 @@ function App() {
         members: allMembers
       };
 
-      setChats((prevChats) => [allData, ...prevChats]);
-
-      // Use onSnapshot to listen for real-time updates on the messages_db document
-      onSnapshot(doc(db, "messages", e), (snapshot) => {
-        const updatedLastMessage = snapshot.data();
-        setChats((prevChats) => {
-          // Find the index of the chat with the same ID in the current state
-          const index = prevChats.findIndex((chat) => chat.id === updatedLastMessage.id);
-
-          // If the chat exists in the current state, replace it with the new data
-          if (index !== -1) {
-            const newChats = [...prevChats];
-            newChats[index] = { ...newChats[index], ...updatedLastMessage };
-            return newChats;
-          }
-          // If the chat doesn't exist in the current state, add it
-          return [...prevChats, updatedLastMessage];
-        });
-      });
+      return allData;
     }));
+
+    // Update the state with unique chats
+
+    setChats(newChats);
   };
-
-  let fetchData = async (uid) => {
-    try {
-      var user_db = await getDoc(doc(db, "users", uid));
-
-      // Use Promise.all for all group-related async operations
-      const groupPromises = await getChats(user_db);
-
-      // Use Promise.all for all friends-related async operations
-      const friendsPromises = user_db.data().friends.map(async (e) => {
-        let f = await getDoc(doc(db, "users", e));
-        setCurrentFriends((prevFriends) => [...prevFriends, f?.data()]);
-      });
-
-      setChatSidebarLoading(false);
-      // Use Promise.all for all f_requests-related async operations
-      const requestsPromises = user_db.data().f_requests.map(async (e) => {
-        let f = await getDoc(doc(db, "users", e));
-        setFrequests((prevRequests) => [...prevRequests, f?.data()]);
-      });
-
-      // Wait for all promises to complete
-      await Promise.all([...groupPromises, ...friendsPromises, ...requestsPromises]);
-
-
-    } catch (error) {
-      console.error('Error fetching data:', error.message);
-    }
-  };
-
 
   useEffect(() => {
     const fetch = async () => {
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
           var uid = auth?.currentUser?.uid;
-          await fetchData(uid);
+          await getChats(uid);
           // Create a reference to this user's specific status node.
           var userStatusDatabaseRef = ref(real_db, "/status/" + uid);
 
@@ -183,16 +141,110 @@ function App() {
     fetch();
   }, []);
 
-  const refresh = () => window.location.reload(true);
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      cookies.set("auth-token", "");
-      refresh();
-    } catch (e) {
-      console.error(e);
-    }
-  };
+
+  useEffect(() => {
+    let fetch = async () => {
+      try {
+        if (!auth.currentUser || auth.currentUser.uid === undefined) return;
+        var snapshots_to_unmount = [];
+        var user_db = await getDoc(doc(db, "users", auth?.currentUser?.uid));
+        
+        user_db.data().groups.map(async e => {
+          // Use onSnapshot to listen for real-time updates on the messages_db document
+          const unsubscribe = onSnapshot(doc(db, "messages", e), async (snapshot) => {
+            const updatedLastMessage = snapshot.data();
+            console.log("UPDATED MESSAGE")
+            console.log(updatedLastMessage);
+            let groupDoc = await getDoc(doc(db, "group", updatedLastMessage.id));
+
+            let allMembers = groupDoc?.data()?.members?.filter((memberId) => {
+              if (memberId === auth?.currentUser?.uid) return false;
+              return true;
+            })?.map(async (memberId) => {
+              let eachMember = await getDoc(doc(db, "users", memberId));
+              return {
+                display_name: eachMember?.data()?.display_name || "Unknown",
+                photoUrl: eachMember?.data()?.photoUrl || "",
+                activityStatus: eachMember?.data()?.activityStatus || "away",
+                id: eachMember?.data()?.userId || "",
+              };
+            });
+
+            allMembers = await Promise.all(allMembers);
+
+            let allData = {
+              id: updatedLastMessage.id,
+              lastMessage: updatedLastMessage.lastMessage,
+              lastMessageSent: updatedLastMessage.lastMessageSent,
+              lastMessageSentBy: updatedLastMessage.lastMessageSentBy,
+              members: allMembers,
+            };
+
+            setChats((prevChats) => {
+              // Find the index of the chat with the same ID in the current state
+              const index = prevChats.findIndex((chat) => chat.id === updatedLastMessage.id);
+              try {
+                // If the chat exists in the current state, replace it with the new data
+                if (index !== -1) {
+                  const newChats = [...prevChats];
+                  newChats[index] = { ...newChats[index], ...allData };
+                  return newChats;
+                }
+                // If the chat doesn't exist in the current state, add it
+                return [...prevChats, allData];
+              } catch (error) {
+                console.error("Error fetching data:", error);
+                // Handle the error or return prevChats if you want to keep the current state
+                return prevChats;
+              }
+            });
+
+
+
+
+          });
+
+          snapshots_to_unmount.push(unsubscribe);
+        });
+
+        let unsubscribe = onSnapshot(doc(db, "users", auth?.currentUser?.uid), async snapshot => {
+          const updatedUserData = snapshot.data();
+
+          if (updatedUserData) {
+            const friendsData = await Promise.all(updatedUserData.friends.map(async (friendId) => {
+              const friendSnapshot = await getDoc(doc(db, "users", friendId));
+              return friendSnapshot?.data();
+            }));
+
+            const requestsData = await Promise.all(updatedUserData.f_requests.map(async (request_id) => {
+              const friendSnapshot = await getDoc(doc(db, "users", request_id));
+              return friendSnapshot?.data();
+            }));
+
+            console.log("CALLED")
+            await getChats(auth?.currentUser?.uid)
+
+            setCurrentFriends(friendsData.filter(Boolean));
+            setFrequests(requestsData.filter(Boolean));
+            setChatSidebarLoading(false);
+          }
+        });
+
+        snapshots_to_unmount.push(unsubscribe);
+
+        return () => {
+          snapshots_to_unmount.forEach((unsubscribeFunction) => {
+            unsubscribeFunction();
+          });
+        };
+      } catch (err) {
+        console.error(err);
+      }
+
+    };
+
+    fetch();
+  }, [auth?.currentUser?.uid, currentGroupId]);
 
   const handleReject = async (r) => {
     try {
@@ -200,9 +252,10 @@ function App() {
 
       const q2 = query(
         usersRef,
-        where("username", "==", r)
+        where("display_name", "==", r)
       );
       const other_user = await getDocs(q2);
+
 
       const requests = my_user.data().f_requests;
       const index = requests.indexOf(other_user.docs[0].data().userId);
@@ -277,63 +330,9 @@ function App() {
     }
   };
 
-
-/*
-
-else {
-
-        const messagesRef = doc(db, "messages", groupId[0].data().id);
-        const messageRef = collection(doc(db, "messages", groupId[0].data().id), "message");
-
-        const querySnapshot = await getDocs(messageRef);
-        querySnapshot.forEach(async (doc) => {
-          await deleteDoc(doc.ref);
-        });
-
-        const groupRef = doc(db, "group", groupId[0].data().id);
-
-        await deleteDoc(messagesRef);
-        await deleteDoc(groupRef);
-
-
-        const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
-
-        const my_groups = my_user.data().groups;
-        const new_my_groups = my_groups.filter(item => item !== groupId[0].data().id);
-
-        const q = query(usersRef, where("display_name", "==", r));
-        const other_user = await getDocs(q);
-
-        const my_friends = my_user.data().friends;
-        const index = my_friends.indexOf(other_user.docs[0].data().userId);
-        if (index > -1) {
-          my_friends.splice(index, 1);
-        }
-        await updateDoc(doc(db, "users", my_user.data().userId), {
-          friends: my_friends,
-          groups: new_my_groups
-        });
-
-
-        const other_friends = other_user.docs[0].data().friends;
-        const other_groups = other_user.docs[0].data().groups;
-        const new_other_groups = other_groups.filter(item => item !== groupId[0].data().id);
-        const other_index = other_friends.indexOf(auth?.currentUser?.uid);
-        if (other_index > -1) {
-          other_friends.splice(other_index, 1);
-        }
-        await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
-          friends: other_friends,
-          groups: new_other_groups,
-        });
-      }
-
-*/
-
-
   const handleRemoveFriend = async (r) => {
     try {
-      if(isChatOpened) hideChat();
+      if (isChatOpened) hideChat();
       let [_, groupId] = await getGroup(r);
       if (groupId.length != 0) {
         const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
@@ -359,7 +358,7 @@ else {
         await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
           friends: other_friends,
         });
-      } 
+      }
 
     } catch (e) {
       console.error(e);
@@ -413,10 +412,8 @@ else {
 
       // Update the document with the actual ID
       await updateDoc(newDocRef, { id: newDocId });
-      console.log("set!");
       setCurrentGroupId(newDocId);
     } else {
-      console.log("Cmmon groups data: " + commonGroups[0].data().id);
       setCurrentGroupId(commonGroups[0].data().id);
     }
   }
@@ -428,7 +425,6 @@ else {
   }
 
   const deleteChat = async (id) => {
-    console.log(id);
     hideChat();
     const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
     let user_groups = my_user.data().groups;
@@ -460,19 +456,7 @@ else {
 
   return (
     <div className="w-full h-full min-h-screen relative flex">
-      <div className="hidden lg:flex lg:w-[80px] flex-col justify-between h-full min-h-screen border-r-[1px] py-5 px-4">
-        <div className="flex flex-col">
-          <div onClick={() => setSelectedSidebar(1)} className={`p-3 space-y-4 cursor-pointer bg-[${selectedSidebar === 1 ? "#f0f0f0" : "#f7f7f7"}] hover:bg-[#f0f0f0] rounded-t-full`}>
-            <img src={chaticon} />
-          </div>
-          <div onClick={() => setSelectedSidebar(2)} className={`p-3 space-y-4 cursor-pointer bg-[${selectedSidebar === 2 ? "#f0f0f0" : "#f7f7f7"}] hover:bg-[#f0f0f0] rounded-b-full`}>
-            <img src={requestsimg} />
-          </div>
-        </div>
-        <div onClick={handleSignOut} className={`p-3 space-y-4 cursor-pointer bg-[#f7f7f7] hover:bg-[#f0f0f0] rounded-full`}>
-          <img src={signout} />
-        </div>
-      </div>
+      <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
       <PanelGroup direction="horizontal" className="w-full h-full min-h-screen flex">
         <Panel defaultSize={30} minSize={30} className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] relative w-full flex-col justify-between shadow-lg`}>
           <div className="flex flex-col h-full max-h-screen">

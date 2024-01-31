@@ -6,24 +6,23 @@ import exitchat from "../../public/exitchat.png"
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
+import { isNaN } from "lodash";
 
 export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideChat }) => {
 
     const [loadMoreDocs, setLoadMoreDocs] = useState(0);
     const [text, setText] = useState([]);
     const [textValue, setTextValue] = useState("");
+    const [isMessageSending, setMessageSending] = useState(false);
     const [currentMembers, setMembers] = useState([]);
     const [isMessageLoading, setMessageLoading] = useState(false);
     const scrollContainerRef = useRef();
 
-
-    useEffect(() => {
-        const foo = async () => {
-            console.log("alo")
-            console.log("Current ID: " + currentGroupId);
+    /*
+    
+    const foo = async () => {
             if(currentGroupId === "") return
              await Promise.all(activeChatData.map(async item => {
-                console.log(item);
                 const q1 = query(
                     collection(db, "users"),
                     where('display_name', '==', item.display_name)
@@ -39,20 +38,18 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                                 groups: arrayUnion(currentGroupId)
                             })
                         } else {
-                            console.log("User is already in the group");
+                            //console.log("User is already in the group");
                         }
                     } else {
-                        console.log("User not found");
+                        //console.log("User not found");
                     }
                 } catch (error) {
                     console.error("Error loading user data:", error);
                 }
             }));
         }
-
-        foo();
-    }, [activeChatData])
-
+    
+    */
     useEffect(() => {
         let foo = async () => {
             if (currentGroupId) {
@@ -91,7 +88,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
     const sendMessage = async (e) => {
         e.preventDefault();
         if (textValue === "") return;
-
+        setMessageSending(true);
         setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
 
         const q = query(
@@ -110,6 +107,34 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
             groups: arrayUnion(currentGroupId),
         })
 
+        console.log("ACTIVE CHAT DATA");
+        console.log(activeChatData);
+        await Promise.all(activeChatData.map(async item => {
+            const q1 = query(
+                collection(db, "users"),
+                where('display_name', '==', item.display_name)
+            );
+
+            try {
+                const other_user = await getDocs(q1);
+
+                // Check if any documents are returned
+                if (other_user.docs.length > 0) {
+                    if (other_user.docs[0].data().groups.indexOf(currentGroupId) === -1) {
+                        await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
+                            groups: arrayUnion(currentGroupId)
+                        })
+                    } else {
+                        //console.log("User is already in the group");
+                    }
+                } else {
+                    //console.log("User not found");
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        }));
+
         await updateDoc(doc(db, "messages", currentGroupId), {
             lastMessage: textValue,
             lastMessageSent: firestoreTimestamp(),
@@ -127,7 +152,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
 
         setTextValue("");
 
-
+        setMessageSending(false);
 
     }
 
@@ -150,7 +175,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
         const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
         const hours = date.getHours().toString().padStart(2, '0');
         const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
+        if (hours !== "NaN" && minutes !== "NaN") return `${hours}:${minutes}`;
     };
     return (
         <div className="w-full h-full relative">
@@ -162,13 +187,13 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <img onClick={hideChat} src={exitchat} className="w-[24px] h-[24px] md:w-[32px] md:h-[32px] cursor-pointer md:hidden" />
-                                <>
-                                    <img src={activeChatData[0]?.photoUrl} className="w-[64px] h-[64px] rounded-full" />
-                                    <div className="flex flex-col">
-                                        <p>{activeChatData[0]?.display_name}</p>
-                                        <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
-                                    </div>
-                                </>
+                            <>
+                                <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-[64px] h-[64px] rounded-full" />
+                                <div className="flex flex-col">
+                                    <p>{activeChatData[0]?.display_name}</p>
+                                    <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
+                                </div>
+                            </>
                         </div>
                         <div className="w-[35px] h-[35px] p-2 cursor-pointer">
                             <img src={threedots} />
@@ -183,9 +208,13 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                 {currentMembers.length > 0 && text.map((m, index) => {
                     if (m.sentBy == auth?.currentUser?.uid) {
                         return <div key={index} className="w-full bg-white flex items-end justify-end px-5 py-2">
-                            <div className="bg-red-500 py-2 px-4 m-2 rounded-xl relative">
+                            <div className={`${isMessageSending && index === 0 ? "bg-red-200" : "bg-red-500"} py-2 px-4 m-2 rounded-xl relative`}>
                                 <p className="text-white font-[600] text-xs md:text-sm">{m.message}</p>
-                                <p className="text-[10px] absolute bottom-[-16px] left-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
+                                {isMessageSending && index === 0 ?
+                                    <div className="absolute bottom-[-22px] left-[-16px]"><BeatLoader size={8} color="#c91e1e" /></div>
+                                    :
+                                    <p className="text-[10px] absolute bottom-[-16px] left-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
+                                }
                             </div>
                             <img className="w-[42px] h-[42px] rounded-full" src={auth?.currentUser?.photoURL} />
                         </div>
@@ -195,7 +224,11 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                             <img className="w-[42px] h-[42px] rounded-full" src={otherMember?.photoUrl} />
                             <div className="bg-[#f0f0f0] py-2 px-4 m-2 relative rounded-xl">
                                 <p className="text-black text-xs md:text-sm">{m.message}</p>
-                                <p className="text-[10px] absolute bottom-[-16px] right-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
+                                {isMessageSending & index === 0 ?
+                                    <div className="absolute bottom-[-22px] right-[-16px]"><BeatLoader size={8} color="#c91e1e" /></div>
+                                    :
+                                    <p className="text-[10px] absolute bottom-[-16px] right-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
+                                }
                             </div>
                         </div>
                     }

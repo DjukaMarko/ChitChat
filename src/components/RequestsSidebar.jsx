@@ -31,7 +31,7 @@ export const RequestsSidebar = ({ requests, acceptRequest, removeRequest}) => {
                 <div className="w-full h-full flex flex-col space-y-4 min-h-screen overflow-y-auto">
                     {requests.map(e => {
                         return (
-                            <div className="w-full flex items-center justify-between p-4 rounded-full border-[1px] shadow-sm">
+                            <div key={e?.id} className="w-full flex items-center justify-between p-4 rounded-full border-[1px] shadow-sm">
                                 <div className="flex space-x-4 items-center">
                                     <img src={e?.photoUrl} className="rounded-full w-[32px] h-[32px]" />
                                     <p>{e?.display_name}</p>

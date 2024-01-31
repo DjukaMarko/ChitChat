@@ -5,10 +5,10 @@ import { SearchBar } from "./SearchBar";
 import { ChatHistory } from "./ChatHistory";
 import { FriendBubble } from "./FriendBubble";
 import { isEqual } from "lodash";
+import { useEffect } from "react";
 
 
 export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat ,removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
-    
     const handleBubble = (r) => {
         setActiveChatData([r]);
         handleChat(r?.display_name);
@@ -21,7 +21,7 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat ,removeFriend,
         setChatOpen(true);
       }
     
-
+      console.log(chats);
     return (
         <>
             <div className="flex flex-col space-y-6 p-5">
@@ -51,7 +51,7 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat ,removeFriend,
                     <p className="text-sm text-center max-w-[50ch] font-[400] tracking-wider">Shhh... Did you hear that? The chat is whispering for some attention. Time to give it a voice!</p>
                 </div>
                 }
-                {chats.map((item, index) => (
+                {chats.length > 0 && chats.map((item, index) => (
                     <ChatHistory key={item.id} deleteChat={(id) => deleteChat(id)} isSelected={isEqual(selectedChat, item) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item)} />
                 ))}
             </div>
