@@ -56,11 +56,18 @@ function App() {
     );
   }
 
+
+  let comparator = (a, b) => {
+    if (a?.lastMessageSent?.seconds > b?.lastMessageSent?.seconds) return 1;
+    else if (a?.lastMessageSent?.seconds < b?.lastMessageSent?.seconds) return -1;
+    else return 0;
+  }
+
   let getChats = async (uid) => {
     var user_db = await getDoc(doc(db, "users", uid));
     if (!user_db.data().groups) return [];
 
-    const newChats = await Promise.all(user_db.data().groups.map(async (e) => {
+    let newChats = await Promise.all(user_db.data().groups.map(async (e) => {
       let group = await getDoc(doc(db, "group", e));
       let messages_db = await getDoc(doc(db, "messages", e));
 
@@ -92,9 +99,7 @@ function App() {
       return allData;
     }));
 
-    // Update the state with unique chats
-
-    setChats(newChats);
+    setChats(newChats.sort(comparator).reverse());
   };
 
   useEffect(() => {
@@ -142,19 +147,18 @@ function App() {
   }, []);
 
 
+
   useEffect(() => {
     let fetch = async () => {
       try {
         if (!auth.currentUser || auth.currentUser.uid === undefined) return;
-        var snapshots_to_unmount = [];
+        let snapshots_to_unmount = [];
+
         var user_db = await getDoc(doc(db, "users", auth?.currentUser?.uid));
-        
         user_db.data().groups.map(async e => {
           // Use onSnapshot to listen for real-time updates on the messages_db document
           const unsubscribe = onSnapshot(doc(db, "messages", e), async (snapshot) => {
             const updatedLastMessage = snapshot.data();
-            console.log("UPDATED MESSAGE")
-            console.log(updatedLastMessage);
             let groupDoc = await getDoc(doc(db, "group", updatedLastMessage.id));
 
             let allMembers = groupDoc?.data()?.members?.filter((memberId) => {
@@ -185,22 +189,21 @@ function App() {
               const index = prevChats.findIndex((chat) => chat.id === updatedLastMessage.id);
               try {
                 // If the chat exists in the current state, replace it with the new data
+
                 if (index !== -1) {
                   const newChats = [...prevChats];
                   newChats[index] = { ...newChats[index], ...allData };
-                  return newChats;
+                  return newChats.sort(comparator).reverse();
                 }
                 // If the chat doesn't exist in the current state, add it
-                return [...prevChats, allData];
+                return [allData, ...prevChats];
+
               } catch (error) {
                 console.error("Error fetching data:", error);
                 // Handle the error or return prevChats if you want to keep the current state
-                return prevChats;
+                return prevChats.sort(comparator).reverse();
               }
             });
-
-
-
 
           });
 
@@ -221,7 +224,6 @@ function App() {
               return friendSnapshot?.data();
             }));
 
-            console.log("CALLED")
             await getChats(auth?.currentUser?.uid)
 
             setCurrentFriends(friendsData.filter(Boolean));
@@ -386,9 +388,11 @@ function App() {
     const result1 = await getDocs(query1);
     const result2 = await getDocs(query2);
 
-    const commonGroups = result1.docs.filter(doc1 =>
+    let commonGroups = result1.docs.filter(doc1 =>
       result2.docs.some(doc2 => doc1.id === doc2.id)
     );
+
+    commonGroups = commonGroups.filter(el => el.data().members.length === 2);
 
     return [other_user, commonGroups];
   }

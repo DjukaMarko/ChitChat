@@ -107,8 +107,6 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
             groups: arrayUnion(currentGroupId),
         })
 
-        console.log("ACTIVE CHAT DATA");
-        console.log(activeChatData);
         await Promise.all(activeChatData.map(async item => {
             const q1 = query(
                 collection(db, "users"),

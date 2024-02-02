@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 import { useEffect } from "react";
 
 
-export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat ,removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
+export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat, removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
     const handleBubble = (r) => {
         setActiveChatData([r]);
         handleChat(r?.display_name);
@@ -21,7 +21,6 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat ,removeFriend,
         setChatOpen(true);
       }
     
-      console.log(chats);
     return (
         <>
             <div className="flex flex-col space-y-6 p-5">
@@ -35,14 +34,6 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat ,removeFriend,
                     {currentFriends.map((r) => (
                         <FriendBubble key={r?.userId} removeFriend={() => removeFriend(r?.display_name)} r={r} handleClick={() => handleBubble(r)} />
                     ))}
-                </div>
-                <div className="w-full flex space-x-1 justify-center items-center text-sm md:text-base">
-                    <div className="w-[50%] flex justify-center py-2 cursor-pointer bg-[#f7f7f7] rounded-lg hover:bg-[#f0f0f0]">
-                        <p>Chats</p>
-                    </div>
-                    <div className="w-[50%] flex justify-center py-2 cursor-pointer rounded-lg hover:bg-[#f0f0f0]">
-                        <p>Chits</p>
-                    </div>
                 </div>
             </div>
             <div className="flex items-center flex-col space-y-1 h-full overflow-y-auto mt-2 p-5 border-t-[1px]">
