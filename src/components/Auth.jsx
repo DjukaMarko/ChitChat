@@ -36,6 +36,7 @@ export const Auth = () => {
           activityStatus: "online",
           f_requests: [],
           friends: [],
+          groups: [],
           lastActive: 0,
         })
       }

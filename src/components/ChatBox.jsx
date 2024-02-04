@@ -6,9 +6,11 @@ import exitchat from "../../public/exitchat.png"
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
-import { isNaN } from "lodash";
+import addtochat from "../../public/addtochat.png"
+import crosssign from "../../public/cross-sign.png"
+import trashcan from "../../public/trashcan.png"
 
-export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideChat }) => {
+export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, deleteChat, currentGroupId, hideChat }) => {
 
     const [loadMoreDocs, setLoadMoreDocs] = useState(0);
     const [text, setText] = useState([]);
@@ -16,6 +18,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
     const [isMessageSending, setMessageSending] = useState(false);
     const [currentMembers, setMembers] = useState([]);
     const [isMessageLoading, setMessageLoading] = useState(false);
+    const [isChatMenuOpened, setChatMenuOpened] = useState(false);
     const scrollContainerRef = useRef();
 
     /*
@@ -168,6 +171,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
             setLoadMoreDocs(prevDocs => prevDocs + 1);
         }
     };
+    console.log(activeChatData)
 
     const formatTime = (timestamp) => {
         const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
@@ -175,6 +179,17 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
         const minutes = date.getMinutes().toString().padStart(2, '0');
         if (hours !== "NaN" && minutes !== "NaN") return `${hours}:${minutes}`;
     };
+
+    const leaveGroup = async () => {
+        deleteChat(currentGroupId);
+        let groupData = await getDoc(doc(db, "group",currentGroupId));
+        let myData = await getDoc(doc(db, "users", auth?.currentUser?.uid));
+        let newMembers = groupData.data().members.filter(el => el !== myData.data().userId);
+        await updateDoc(doc(db, "group", currentGroupId), {
+            members: newMembers,
+        })
+
+    }
     return (
         <div className="w-full h-full relative">
             <div
@@ -193,8 +208,26 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, currentGroupId, hideCha
                                 </div>
                             </>
                         </div>
-                        <div className="w-[35px] h-[35px] p-2 cursor-pointer">
-                            <img src={threedots} />
+                        <div className="p-2">
+                            <img onClick={() => setChatMenuOpened(prev => !prev)} className="cursor-pointer w-[24px] h-[24px]" src={threedots} />
+                            {isChatMenuOpened && <div className="absolute right-6 justify-center flex flex-col border-[1px] bg-white rounded-xl shadow-sm">
+                                <div onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center hover:bg-[#f0f0f0] cursor-pointer p-4 rounded-t-xl">
+                                    <img src={addtochat} className="w-[20px] h-[20px]" />
+                                    <p className="text-[14px] font-[500]">Add Member</p>
+                                </div>
+                                {activeChatData.length > 1 ?
+                                    <div onClick={() => leaveGroup()} className="flex space-x-4 items-center hover:bg-[#f0f0f0] cursor-pointer p-4 rounded-b-xl">
+                                        <img src={crosssign} className="w-[20px] h-[20px]" />
+                                        <p className="text-[14px] text-red-800 font-[600]">Leave Group</p>
+                                    </div>
+                                    :
+
+                                    <div onClick={() => deleteChat(currentGroupId)} className="flex space-x-4 items-center hover:bg-[#f0f0f0] cursor-pointer p-4 rounded-b-xl">
+                                        <img src={trashcan} className="w-[20px] h-[20px]" />
+                                        <p className="text-[14px] text-red-800 font-[600]">Delete Chat</p>
+                                    </div>
+                                }
+                            </div>}
                         </div>
                     </div>
                     {isMessageLoading &&

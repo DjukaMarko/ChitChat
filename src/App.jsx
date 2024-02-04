@@ -5,11 +5,13 @@ import Cookies from "universal-cookie";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db, real_db } from "./config/firebase";
 import drag from "../public/drag.png"
+import add from "../public/add.png"
 import moment from 'moment';
 import emptycart from "../public/undraw_blank_canvas.svg"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
   addDoc,
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -33,6 +35,7 @@ import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { RequestsSidebar } from "./components/RequestsSidebar";
 import { Sidebar } from "./components/Sidebar";
+import { SearchInput } from "./components/SearchInput";
 
 const cookies = new Cookies();
 function App() {
@@ -45,7 +48,12 @@ function App() {
   const [currentGroupId, setCurrentGroupId] = useState("");
   const [isChatSidebarLoading, setChatSidebarLoading] = useState(true);
   const [activeChatData, setActiveChatData] = useState({});
+  const [memberListWindow, setMemberListWindow] = useState(false);
   const [selectedChat, setSelectedChat] = useState({});
+
+  const [searchInput, setSearchInput] = useState("");
+
+  const [isAddMemberClicked, setAddMemberClicked] = useState(false);
 
   const usersRef = collection(db, "users");
   if (!isAuth) {
@@ -56,6 +64,7 @@ function App() {
     );
   }
 
+  console.log(currentFriends)
 
   let comparator = (a, b) => {
     if (a?.lastMessageSent?.seconds > b?.lastMessageSent?.seconds) return 1;
@@ -65,7 +74,8 @@ function App() {
 
   let getChats = async (uid) => {
     var user_db = await getDoc(doc(db, "users", uid));
-    if (!user_db.data().groups) return [];
+    console.log(user_db.data().groups.length);
+    if (user_db.data().groups.length === 0) return [];
 
     let newChats = await Promise.all(user_db.data().groups.map(async (e) => {
       let group = await getDoc(doc(db, "group", e));
@@ -108,6 +118,7 @@ function App() {
         if (user) {
           var uid = auth?.currentUser?.uid;
           await getChats(uid);
+          setChatSidebarLoading(false);
           // Create a reference to this user's specific status node.
           var userStatusDatabaseRef = ref(real_db, "/status/" + uid);
 
@@ -147,16 +158,18 @@ function App() {
   }, []);
 
 
-
   useEffect(() => {
     let fetch = async () => {
       try {
-        if (!auth.currentUser || auth.currentUser.uid === undefined) return;
+        if (!auth?.currentUser?.uid) {
+          console.log("User not authenticated");
+          return;
+        }
         let snapshots_to_unmount = [];
 
         var user_db = await getDoc(doc(db, "users", auth?.currentUser?.uid));
-        user_db.data().groups.map(async e => {
-          // Use onSnapshot to listen for real-time updates on the messages_db document
+
+        await Promise.all(user_db.data().groups.map(async (e) => {
           const unsubscribe = onSnapshot(doc(db, "messages", e), async (snapshot) => {
             const updatedLastMessage = snapshot.data();
             let groupDoc = await getDoc(doc(db, "group", updatedLastMessage.id));
@@ -185,32 +198,25 @@ function App() {
             };
 
             setChats((prevChats) => {
-              // Find the index of the chat with the same ID in the current state
               const index = prevChats.findIndex((chat) => chat.id === updatedLastMessage.id);
               try {
-                // If the chat exists in the current state, replace it with the new data
-
                 if (index !== -1) {
                   const newChats = [...prevChats];
                   newChats[index] = { ...newChats[index], ...allData };
                   return newChats.sort(comparator).reverse();
                 }
-                // If the chat doesn't exist in the current state, add it
                 return [allData, ...prevChats];
-
               } catch (error) {
                 console.error("Error fetching data:", error);
-                // Handle the error or return prevChats if you want to keep the current state
                 return prevChats.sort(comparator).reverse();
               }
             });
-
           });
 
           snapshots_to_unmount.push(unsubscribe);
-        });
+        }));
 
-        let unsubscribe = onSnapshot(doc(db, "users", auth?.currentUser?.uid), async snapshot => {
+        let unsubscribe = onSnapshot(doc(db, "users", auth?.currentUser?.uid), async (snapshot) => {
           const updatedUserData = snapshot.data();
 
           if (updatedUserData) {
@@ -224,11 +230,11 @@ function App() {
               return friendSnapshot?.data();
             }));
 
-            await getChats(auth?.currentUser?.uid)
+            await getChats(auth?.currentUser?.uid);
 
             setCurrentFriends(friendsData.filter(Boolean));
             setFrequests(requestsData.filter(Boolean));
-            setChatSidebarLoading(false);
+            
           }
         });
 
@@ -242,11 +248,11 @@ function App() {
       } catch (err) {
         console.error(err);
       }
-
     };
 
     fetch();
   }, [auth?.currentUser?.uid, currentGroupId]);
+
 
   const handleReject = async (r) => {
     try {
@@ -458,8 +464,51 @@ function App() {
     }
   }
 
+  const handleAddMember = async (item, index) => {
+    let currentgroup = await getDoc(doc(db, "group", currentGroupId));
+    console.log(currentgroup.data());
+    await updateDoc(doc(db, "group", currentGroupId), {
+      members: arrayUnion(item?.userId),
+    })
+
+  }
+
+  let checkIfExists = (item, index) => {
+    for (let i = 0; i < activeChatData.length; i++) {
+      if (activeChatData[i].display_name === item?.display_name) return true;
+    }
+    return false;
+  }
+
+
+  //<SearchInput searchInput={searchInput} setSearchInput={setSearchInput} handleSearchSubmit={() => console.log("hey")} />
   return (
     <div className="w-full h-full min-h-screen relative flex">
+      {memberListWindow &&
+        <>
+
+          <div onClick={() => setMemberListWindow(false)} className="bg-black bg-opacity-20 z-[100000] absolute left-0 right-0 top-0 bottom-0 flex justify-center items-center">
+          </div>
+          <div className="absolute w-full h-full flex justify-center items-center">
+            <div className="bg-white absolute z-[1000000] w-[550px] h-[350px] rounded-xl p-6 flex flex-col space-y-6">
+              <div className="flex flex-col overflow-y-auto">
+                {currentFriends.filter((item, index) => !checkIfExists(item, index)).map((item, index) => {
+                  return (<div key={item?.userId} className="flex justify-between items-center hover:bg-[#f0f0f0] cursor-pointer p-2 rounded-xl">
+                    <div className="flex space-x-4 items-center">
+                      <img src={item?.photoUrl} referrerPolicy="no-referrer" className="w-[50px] h-[50px] rounded-full" />
+                      <p className="text-sm md:text-md">{item?.display_name}</p>
+                    </div>
+                    <button onClick={(event) => {
+                      handleAddMember(item, index)
+                      event.currentTarget.disabled = true;
+                    }} className="disabled:cursor-not-allowed disabled:opacity-50"><img src={add} className="w-[24px] h-[24px]" /> </button>
+                  </div>)
+                })}
+              </div>
+            </div>
+          </div>
+        </>
+      }
       <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
       <PanelGroup direction="horizontal" className="w-full h-full min-h-screen flex">
         <Panel defaultSize={30} minSize={30} className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] relative w-full flex-col justify-between shadow-lg`}>
@@ -473,7 +522,6 @@ function App() {
                   usersRef={usersRef}
                   formatTimeAgo={(t) => formatTimeAgo(t)}
                   chats={chats}
-                  deleteChat={(id) => deleteChat(id)}
                   currentFriends={currentFriends}
                   selectedChat={selectedChat}
                   setActiveChatData={(v) => setActiveChatData(v)}
@@ -497,7 +545,7 @@ function App() {
         <Panel minSize={35} className={(isChatOpened ? "w-full max-h-screen" : "hidden md:flex justify-center items-center w-full max-h-screen")}>
           {
             isChatOpened && currentGroupId !== "" ? (
-              <ChatBox formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} hideChat={hideChat} />
+              <ChatBox setMemberListWindow={(v) => setMemberListWindow(v)} formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} deleteChat={id => deleteChat(id)} hideChat={hideChat} />
             ) :
               <div className="flex flex-col justify-center items-center space-y-6">
                 <img src={emptycart} className="w-[220px] h-[220px]" />

@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 import { useEffect } from "react";
 
 
-export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat, removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
+export const ChatSidebar = ({ usersRef, formatTimeAgo, removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
     const handleBubble = (r) => {
         setActiveChatData([r]);
         handleChat(r?.display_name);
@@ -43,7 +43,7 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, deleteChat, removeFriend,
                 </div>
                 }
                 {chats.length > 0 && chats.map((item, index) => (
-                    <ChatHistory key={item.id} deleteChat={(id) => deleteChat(id)} isSelected={isEqual(selectedChat, item) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item)} />
+                    <ChatHistory key={item.id}  isSelected={isEqual(selectedChat, item) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item)} />
                 ))}
             </div>
         </>
