@@ -56,7 +56,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
     useEffect(() => {
         let foo = async () => {
             if (currentGroupId) {
-                let query1 = query(collection(db, "group"), where("id", "==", currentGroupId));
+                let query1 = query(collection(db, "groups"), where("id", "==", currentGroupId));
                 let groupData = await getDocs(query1);
 
                 groupData.docs[0].data().members.map(async (m) => {
@@ -75,7 +75,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
         if (currentGroupId === "") return;
 
         setMessageLoading(true);
-        const subcollectionRef = collection(doc(db, "messages", currentGroupId), "message");
+        const subcollectionRef = collection(doc(db, "groups", currentGroupId), "messages");
         const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(20 + (loadMoreDocs * 20)));
         const unsubscribe = onSnapshot(orderedQuery, (querySnapshot) => {
             setText([]);
@@ -88,7 +88,77 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
         return () => unsubscribe();
     }, [currentGroupId, loadMoreDocs]);
 
+
+
+
     const sendMessage = async (e) => {
+        e.preventDefault();
+        if (textValue === "") return;
+        setMessageSending(true);
+        setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
+
+        await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
+            groups: arrayUnion(currentGroupId),
+        })
+
+        await Promise.all(activeChatData.map(async item => {
+            const q1 = query(
+                collection(db, "users"),
+                where('display_name', '==', item.display_name)
+            );
+
+            try {
+                const other_user = await getDocs(q1);
+
+                // Check if any documents are returned
+                if (other_user.docs.length > 0) {
+                    if (other_user.docs[0].data().groups.indexOf(currentGroupId) === -1) {
+                        await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
+                            groups: arrayUnion(currentGroupId)
+                        })
+                    } else {
+                        //console.log("User is already in the group");
+                    }
+                } else {
+                    //console.log("User not found");
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        }));
+
+        await updateDoc(doc(db, "groups", currentGroupId), {
+            lastMessage: textValue,
+            lastMessageSent: firestoreTimestamp(),
+            lastMessageSentBy: auth?.currentUser?.uid,
+        })
+
+
+        const messageRef = collection(doc(db, "groups", currentGroupId), "messages");
+
+        addDoc(messageRef, {
+            message: textValue,
+            sentAt: firestoreTimestamp(),
+            sentBy: auth?.currentUser?.uid
+        });
+
+        setTextValue("");
+
+        setMessageSending(false);
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+   /* const sendMessage1 = async (e) => {
         e.preventDefault();
         if (textValue === "") return;
         setMessageSending(true);
@@ -155,7 +225,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
 
         setMessageSending(false);
 
-    }
+    }*/
 
     const addText = (e) => {
         setTextValue(e.target.value);
@@ -171,7 +241,6 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
             setLoadMoreDocs(prevDocs => prevDocs + 1);
         }
     };
-    console.log(activeChatData)
 
     const formatTime = (timestamp) => {
         const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
@@ -182,10 +251,10 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
 
     const leaveGroup = async () => {
         deleteChat(currentGroupId);
-        let groupData = await getDoc(doc(db, "group",currentGroupId));
+        let groupData = await getDoc(doc(db, "groups",currentGroupId));
         let myData = await getDoc(doc(db, "users", auth?.currentUser?.uid));
         let newMembers = groupData.data().members.filter(el => el !== myData.data().userId);
-        await updateDoc(doc(db, "group", currentGroupId), {
+        await updateDoc(doc(db, "groups", currentGroupId), {
             members: newMembers,
         })
 

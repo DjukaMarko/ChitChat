@@ -35,14 +35,11 @@ import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { RequestsSidebar } from "./components/RequestsSidebar";
 import { Sidebar } from "./components/Sidebar";
-import { SearchInput } from "./components/SearchInput";
+
 
 const cookies = new Cookies();
 function App() {
   const [isAuth, _] = useState(cookies.get("auth-token"));
-  const [f_requests, setFrequests] = useState([]);
-  const [chats, setChats] = useState([]);
-  const [currentFriends, setCurrentFriends] = useState([]);
   const [isChatOpened, setChatOpen] = useState(false);
   const [selectedSidebar, setSelectedSidebar] = useState(1); // 1 - chat, 2 - friend requests
   const [currentGroupId, setCurrentGroupId] = useState("");
@@ -50,10 +47,8 @@ function App() {
   const [activeChatData, setActiveChatData] = useState({});
   const [memberListWindow, setMemberListWindow] = useState(false);
   const [selectedChat, setSelectedChat] = useState({});
-
-  const [searchInput, setSearchInput] = useState("");
-
-  const [isAddMemberClicked, setAddMemberClicked] = useState(false);
+  const [myUserData, setMyUserData] = useState({});
+  const [myGroups, setMyGroups] = useState([]);
 
   const usersRef = collection(db, "users");
   if (!isAuth) {
@@ -64,61 +59,75 @@ function App() {
     );
   }
 
-  console.log(currentFriends)
+  useEffect(() => {
+    if(myGroups.length > 0) setChatSidebarLoading(false);
+  }, [myGroups])
 
-  let comparator = (a, b) => {
-    if (a?.lastMessageSent?.seconds > b?.lastMessageSent?.seconds) return 1;
-    else if (a?.lastMessageSent?.seconds < b?.lastMessageSent?.seconds) return -1;
-    else return 0;
-  }
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (!myUserData) return;
+      if (myUserData.groups === undefined) return;
+      let snapshots_to_unmount = [];
 
-  let getChats = async (uid) => {
-    var user_db = await getDoc(doc(db, "users", uid));
-    console.log(user_db.data().groups.length);
-    if (user_db.data().groups.length === 0) return [];
+      await Promise.all(myUserData.groups.map(async group => {
+        const unsubscribe = onSnapshot(doc(db, "groups", group), async snapshot => {
+          const membersData = await Promise.all(snapshot.data().members.filter(member => member !== myUserData.userId).map(async member => {
+            let memberData = await getDoc(doc(db, "users", member));
+            return memberData.data();
+          }));
 
-    let newChats = await Promise.all(user_db.data().groups.map(async (e) => {
-      let group = await getDoc(doc(db, "group", e));
-      let messages_db = await getDoc(doc(db, "messages", e));
-
-      let allMembers = await Promise.all(
-        group?.data().members?.filter((memberId) => {
-          if (memberId === auth?.currentUser?.uid) return false;
-          return true;
-        })?.map(async (memberId) => {
-          // Handle the case where eachMember?.data() might be null or undefined
-          let eachMember = await getDoc(doc(db, "users", memberId));
-          return {
-            display_name: eachMember?.data()?.display_name || "Unknown",
-            photoUrl: eachMember?.data()?.photoUrl || "",
-            activityStatus: eachMember?.data()?.activityStatus || "away",
-            id: eachMember?.data()?.userId || "",
+          let groupData = {
+            ...snapshot.data(),
+            members: membersData,
           };
+
+          setMyGroups((prev) => {
+            const updatedGroups = [groupData, ...prev.filter((prevGroup) => prevGroup.id !== groupData.id)];
+            return updatedGroups;
+          });
+        });
+        
+        snapshots_to_unmount.push(unsubscribe);
+      }));
+
+      return () => {
+        snapshots_to_unmount.forEach(unsub => {
+          unsub();
         })
-      );
+      }
+    }
+
+    fetchGroups();
+  }, [myUserData]);
 
 
-      let allData = {
-        id: group?.data().id,
-        lastMessage: messages_db?.data().lastMessage,
-        lastMessageSent: messages_db?.data().lastMessageSent,
-        lastMessageSentBy: messages_db?.data().lastMessageSentBy,
-        members: allMembers
-      };
 
-      return allData;
-    }));
-
-    setChats(newChats.sort(comparator).reverse());
-  };
 
   useEffect(() => {
     const fetch = async () => {
+      let snapshots_to_unmount = [];
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
+          const unsubscribe_user_snapshot = onSnapshot(doc(db, "users", auth?.currentUser?.uid), async snapshot => {
+            const friendsData = await Promise.all(snapshot.data().friends.map(async (friendId) => {
+              const friendSnapshot = await getDoc(doc(db, "users", friendId));
+              return friendSnapshot?.data();
+            }));
+
+            const requestsData = await Promise.all(snapshot.data().f_requests.map(async (request_id) => {
+              const friendSnapshot = await getDoc(doc(db, "users", request_id));
+              return friendSnapshot?.data();
+            }));
+
+            setMyUserData({
+              ...snapshot.data(),
+              f_requests: requestsData.filter(Boolean),
+              friends: friendsData.filter(Boolean),
+            });
+
+          });
+          snapshots_to_unmount.push(unsubscribe_user_snapshot);
           var uid = auth?.currentUser?.uid;
-          await getChats(uid);
-          setChatSidebarLoading(false);
           // Create a reference to this user's specific status node.
           var userStatusDatabaseRef = ref(real_db, "/status/" + uid);
 
@@ -149,109 +158,17 @@ function App() {
           });
         }
       });
+
+      snapshots_to_unmount.push(unsubscribe);
       return () => {
-        unsubscribe();
+        snapshots_to_unmount.forEach(unsubscribe => {
+          unsubscribe();
+        });
       };
     };
 
     fetch();
   }, []);
-
-
-  useEffect(() => {
-    let fetch = async () => {
-      try {
-        if (!auth?.currentUser?.uid) {
-          console.log("User not authenticated");
-          return;
-        }
-        let snapshots_to_unmount = [];
-
-        var user_db = await getDoc(doc(db, "users", auth?.currentUser?.uid));
-
-        await Promise.all(user_db.data().groups.map(async (e) => {
-          const unsubscribe = onSnapshot(doc(db, "messages", e), async (snapshot) => {
-            const updatedLastMessage = snapshot.data();
-            let groupDoc = await getDoc(doc(db, "group", updatedLastMessage.id));
-
-            let allMembers = groupDoc?.data()?.members?.filter((memberId) => {
-              if (memberId === auth?.currentUser?.uid) return false;
-              return true;
-            })?.map(async (memberId) => {
-              let eachMember = await getDoc(doc(db, "users", memberId));
-              return {
-                display_name: eachMember?.data()?.display_name || "Unknown",
-                photoUrl: eachMember?.data()?.photoUrl || "",
-                activityStatus: eachMember?.data()?.activityStatus || "away",
-                id: eachMember?.data()?.userId || "",
-              };
-            });
-
-            allMembers = await Promise.all(allMembers);
-
-            let allData = {
-              id: updatedLastMessage.id,
-              lastMessage: updatedLastMessage.lastMessage,
-              lastMessageSent: updatedLastMessage.lastMessageSent,
-              lastMessageSentBy: updatedLastMessage.lastMessageSentBy,
-              members: allMembers,
-            };
-
-            setChats((prevChats) => {
-              const index = prevChats.findIndex((chat) => chat.id === updatedLastMessage.id);
-              try {
-                if (index !== -1) {
-                  const newChats = [...prevChats];
-                  newChats[index] = { ...newChats[index], ...allData };
-                  return newChats.sort(comparator).reverse();
-                }
-                return [allData, ...prevChats];
-              } catch (error) {
-                console.error("Error fetching data:", error);
-                return prevChats.sort(comparator).reverse();
-              }
-            });
-          });
-
-          snapshots_to_unmount.push(unsubscribe);
-        }));
-
-        let unsubscribe = onSnapshot(doc(db, "users", auth?.currentUser?.uid), async (snapshot) => {
-          const updatedUserData = snapshot.data();
-
-          if (updatedUserData) {
-            const friendsData = await Promise.all(updatedUserData.friends.map(async (friendId) => {
-              const friendSnapshot = await getDoc(doc(db, "users", friendId));
-              return friendSnapshot?.data();
-            }));
-
-            const requestsData = await Promise.all(updatedUserData.f_requests.map(async (request_id) => {
-              const friendSnapshot = await getDoc(doc(db, "users", request_id));
-              return friendSnapshot?.data();
-            }));
-
-            await getChats(auth?.currentUser?.uid);
-
-            setCurrentFriends(friendsData.filter(Boolean));
-            setFrequests(requestsData.filter(Boolean));
-            
-          }
-        });
-
-        snapshots_to_unmount.push(unsubscribe);
-
-        return () => {
-          snapshots_to_unmount.forEach((unsubscribeFunction) => {
-            unsubscribeFunction();
-          });
-        };
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetch();
-  }, [auth?.currentUser?.uid, currentGroupId]);
 
 
   const handleReject = async (r) => {
@@ -381,12 +298,12 @@ function App() {
     const other_user = await getDocs(q_other_user);
 
     const query1 = query(
-      collection(db, 'group'),
-      where('members', 'array-contains', auth?.currentUser?.uid)
+      collection(db, 'groups'),
+      where('members', 'array-contains', myUserData.userId)
     );
 
     const query2 = query(
-      collection(db, 'group'),
+      collection(db, 'groups'),
       where('members', 'array-contains', other_user.docs[0].data().userId)
     );
 
@@ -409,7 +326,7 @@ function App() {
     const [other_user, commonGroups] = await getGroup(username);
 
     if (commonGroups.length == 0) {
-      const newDocRef = await addDoc(collection(db, "group"), {
+      const newDocRef = await addDoc(collection(db, "groups"), {
         createdAt: firestoreTimestamp(),
         createdBy: auth?.currentUser?.uid,
         members: [auth?.currentUser?.uid, other_user.docs[0].data().userId],
@@ -436,10 +353,8 @@ function App() {
 
   const deleteChat = async (id) => {
     hideChat();
-    const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
-    let user_groups = my_user.data().groups;
-    let new_groups = user_groups.filter(item => item !== id);
-    await updateDoc(doc(db, "users", my_user.data().userId), {
+    let new_groups = myUserData.groups.filter(item => item !== id);
+    await updateDoc(doc(db, "users", myUserData.userId), {
       groups: new_groups,
     })
   }
@@ -465,17 +380,18 @@ function App() {
   }
 
   const handleAddMember = async (item, index) => {
-    let currentgroup = await getDoc(doc(db, "group", currentGroupId));
-    console.log(currentgroup.data());
-    await updateDoc(doc(db, "group", currentGroupId), {
-      members: arrayUnion(item?.userId),
+    if (!item || item.userId === undefined) return;
+    let currentgroup = await getDoc(doc(db, "groups", currentGroupId));
+    await updateDoc(doc(db, "groups", currentGroupId), {
+      members: arrayUnion(item.userId),
     })
 
   }
 
   let checkIfExists = (item, index) => {
+    if (!item || item.display_name === undefined) return;
     for (let i = 0; i < activeChatData.length; i++) {
-      if (activeChatData[i].display_name === item?.display_name) return true;
+      if (activeChatData[i].display_name === item.display_name) return true;
     }
     return false;
   }
@@ -492,7 +408,7 @@ function App() {
           <div className="absolute w-full h-full flex justify-center items-center">
             <div className="bg-white absolute z-[1000000] w-[550px] h-[350px] rounded-xl p-6 flex flex-col space-y-6">
               <div className="flex flex-col overflow-y-auto">
-                {currentFriends.filter((item, index) => !checkIfExists(item, index)).map((item, index) => {
+                {myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).map((item, index) => {
                   return (<div key={item?.userId} className="flex justify-between items-center hover:bg-[#f0f0f0] cursor-pointer p-2 rounded-xl">
                     <div className="flex space-x-4 items-center">
                       <img src={item?.photoUrl} referrerPolicy="no-referrer" className="w-[50px] h-[50px] rounded-full" />
@@ -521,8 +437,8 @@ function App() {
                 <ChatSidebar
                   usersRef={usersRef}
                   formatTimeAgo={(t) => formatTimeAgo(t)}
-                  chats={chats}
-                  currentFriends={currentFriends}
+                  myUserData={myUserData}
+                  myGroups={myGroups}
                   selectedChat={selectedChat}
                   setActiveChatData={(v) => setActiveChatData(v)}
                   handleChat={(v) => handleChat(v)}
@@ -532,7 +448,7 @@ function App() {
                   setSelectedChat={(v) => setSelectedChat(v)}
                 />
                 :
-                <RequestsSidebar requests={f_requests} acceptRequest={(r) => handleAccept(r)} removeRequest={(r) => handleReject(r)} />
+                <RequestsSidebar myUserData={myUserData} acceptRequest={(r) => handleAccept(r)} removeRequest={(r) => handleReject(r)} />
 
             }
           </div>

@@ -3,7 +3,7 @@ import emptyrequests from "../../public/emptyrequests.svg"
 import acceptrequest from "../../public/acceptrequest.png"
 import removerequest from "../../public/removerequest.png"
 
-export const RequestsSidebar = ({ requests, acceptRequest, removeRequest}) => {
+export const RequestsSidebar = ({ myUserData, acceptRequest, removeRequest}) => {
 
     const handleAccept = (display_name) => {
         acceptRequest(display_name);
@@ -19,7 +19,7 @@ export const RequestsSidebar = ({ requests, acceptRequest, removeRequest}) => {
                     <p className="text-lg md:text-2xl font-[500]">Requests</p>
                     <div className="cursor-pointer bg-[#f7f7f7] lg:hidden block hover:bg-[#f0f0f0] rounded-full p-2"><img src={hamburger} className="w-[20px] h-[20px]" /></div>
                 </div>
-                {requests.length == 0 ?
+                {myUserData?.f_requests?.length == 0 ?
                 
                     <div className="w-full h-full flex justify-center items-center">
                         <div className="flex flex-col space-y-4 items-center justify-center">
@@ -29,7 +29,7 @@ export const RequestsSidebar = ({ requests, acceptRequest, removeRequest}) => {
                     </div>
                 :
                 <div className="w-full h-full flex flex-col space-y-4 min-h-screen overflow-y-auto">
-                    {requests.map(e => {
+                    {myUserData?.f_requests?.map(e => {
                         return (
                             <div key={e?.id} className="w-full flex items-center justify-between p-4 rounded-full border-[1px] shadow-sm">
                                 <div className="flex space-x-4 items-center">

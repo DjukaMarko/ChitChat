@@ -8,19 +8,19 @@ import { isEqual } from "lodash";
 import { useEffect } from "react";
 
 
-export const ChatSidebar = ({ usersRef, formatTimeAgo, removeFriend, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat}) => {
+export const ChatSidebar = ({ usersRef, formatTimeAgo, myUserData, removeFriend, myGroups, chats, currentFriends, selectedChat, setActiveChatData, handleChat, setChatOpen, setCurrentGroupId, setSelectedChat }) => {
     const handleBubble = (r) => {
         setActiveChatData([r]);
         handleChat(r?.display_name);
-      }
-    
-      const handleChatByGroupId = async (item) => {
+    }
+
+    const handleChatByGroupId = async (item) => {
         setCurrentGroupId(item.id);
         setSelectedChat(item);
         setActiveChatData(item.members);
         setChatOpen(true);
-      }
-    
+    }
+
     return (
         <>
             <div className="flex flex-col space-y-6 p-5">
@@ -30,22 +30,27 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, removeFriend, chats, curr
                 </div>
                 <SearchBar usersRef={usersRef} />
                 <div className="flex w-full min-h-[6rem] space-x-6 overflow-x-auto">
-                    <FriendBubble r={{ username: auth?.currentUser?.displayName, photoUrl: auth?.currentUser?.photoURL, activityStatus: "online", display_name: "You" }} />
-                    {currentFriends.map((r) => (
-                        <FriendBubble key={r?.userId} removeFriend={() => removeFriend(r?.display_name)} r={r} handleClick={() => handleBubble(r)} />
+                    <FriendBubble r={myUserData} />
+                    {myUserData?.friends?.map((r) => (
+                        <FriendBubble key={r.userId} removeFriend={() => removeFriend(r.display_name)} r={r} handleClick={() => handleBubble(r)} />
                     ))}
                 </div>
             </div>
             <div className="flex items-center flex-col space-y-1 h-full overflow-y-auto mt-2 p-5 border-t-[1px]">
-                {chats.length == 0 && <div className="flex mt-16 flex-col items-center justify-center space-y-6">
-                    <img src={emptychat} className="w-[128px] h-[128px]" />
-                    <p className="text-sm text-center max-w-[50ch] font-[400] tracking-wider">Shhh... Did you hear that? The chat is whispering for some attention. Time to give it a voice!</p>
-                </div>
+                {myGroups.length === 0 ?
+
+                    <div className="flex mt-16 flex-col items-center justify-center space-y-6">
+                        <img src={emptychat} className="w-[128px] h-[128px]" />
+                        <p className="text-sm text-center max-w-[50ch] font-[400] tracking-wider">Shhh... Did you hear that? The chat is whispering for some attention. Time to give it a voice!</p>
+                    </div>
+                    :
+                    myGroups.map((item, index) => (
+                        <ChatHistory key={item.id} isSelected={isEqual(selectedChat.id, item.id) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item)} />
+                    ))
                 }
-                {chats.length > 0 && chats.map((item, index) => (
-                    <ChatHistory key={item.id}  isSelected={isEqual(selectedChat, item) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item)} />
-                ))}
             </div>
         </>
     )
 }
+
+//<ChatHistory key={item.id} isSelected={isEqual(selectedChat, item) ? true : false} formatTimeAgo={(t) => formatTimeAgo(t)} item={item} index={index} handleClick={() => handleChatByGroupId(item)} />
