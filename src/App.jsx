@@ -60,10 +60,6 @@ function App() {
   }
 
   useEffect(() => {
-    if(myGroups.length > 0) setChatSidebarLoading(false);
-  }, [myGroups])
-
-  useEffect(() => {
     const fetchGroups = async () => {
       if (!myUserData) return;
       if (myUserData.groups === undefined) return;
@@ -83,6 +79,7 @@ function App() {
 
           setMyGroups((prev) => {
             const updatedGroups = [groupData, ...prev.filter((prevGroup) => prevGroup.id !== groupData.id)];
+            updatedGroups.sort((a,b) => b?.lastMessageSent?.seconds - a?.lastMessageSent?.seconds)
             return updatedGroups;
           });
         });
@@ -90,6 +87,7 @@ function App() {
         snapshots_to_unmount.push(unsubscribe);
       }));
 
+      setChatSidebarLoading(false);
       return () => {
         snapshots_to_unmount.forEach(unsub => {
           unsub();
@@ -354,6 +352,7 @@ function App() {
   const deleteChat = async (id) => {
     hideChat();
     let new_groups = myUserData.groups.filter(item => item !== id);
+    setMyGroups(prevGroups => prevGroups.filter(group => group.id !== id));
     await updateDoc(doc(db, "users", myUserData.userId), {
       groups: new_groups,
     })

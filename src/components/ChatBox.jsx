@@ -9,6 +9,8 @@ import { BeatLoader } from "react-spinners";
 import addtochat from "../../public/addtochat.png"
 import crosssign from "../../public/cross-sign.png"
 import trashcan from "../../public/trashcan.png"
+import moment from "moment";
+
 
 export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, deleteChat, currentGroupId, hideChat }) => {
 
@@ -21,38 +23,6 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
     const [isChatMenuOpened, setChatMenuOpened] = useState(false);
     const scrollContainerRef = useRef();
 
-    /*
-    
-    const foo = async () => {
-            if(currentGroupId === "") return
-             await Promise.all(activeChatData.map(async item => {
-                const q1 = query(
-                    collection(db, "users"),
-                    where('display_name', '==', item.display_name)
-                );
-        
-                try {
-                    const other_user = await getDocs(q1);
-        
-                    // Check if any documents are returned
-                    if (other_user.docs.length > 0) {
-                        if (other_user.docs[0].data().groups.indexOf(currentGroupId) === -1) {
-                            await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
-                                groups: arrayUnion(currentGroupId)
-                            })
-                        } else {
-                            //console.log("User is already in the group");
-                        }
-                    } else {
-                        //console.log("User not found");
-                    }
-                } catch (error) {
-                    console.error("Error loading user data:", error);
-                }
-            }));
-        }
-    
-    */
     useEffect(() => {
         let foo = async () => {
             if (currentGroupId) {
@@ -149,84 +119,6 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
     }
 
 
-
-
-
-
-
-
-
-
-
-   /* const sendMessage1 = async (e) => {
-        e.preventDefault();
-        if (textValue === "") return;
-        setMessageSending(true);
-        setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
-
-        const q = query(
-            collection(db, "messages"),
-            where('id', '==', currentGroupId)
-        );
-
-        const message_at_group = await getDocs(q);
-        if (message_at_group.empty) {
-            await setDoc(doc(db, "messages", currentGroupId), {
-                id: currentGroupId,
-            });
-        }
-
-        await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
-            groups: arrayUnion(currentGroupId),
-        })
-
-        await Promise.all(activeChatData.map(async item => {
-            const q1 = query(
-                collection(db, "users"),
-                where('display_name', '==', item.display_name)
-            );
-
-            try {
-                const other_user = await getDocs(q1);
-
-                // Check if any documents are returned
-                if (other_user.docs.length > 0) {
-                    if (other_user.docs[0].data().groups.indexOf(currentGroupId) === -1) {
-                        await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
-                            groups: arrayUnion(currentGroupId)
-                        })
-                    } else {
-                        //console.log("User is already in the group");
-                    }
-                } else {
-                    //console.log("User not found");
-                }
-            } catch (error) {
-                console.error("Error loading user data:", error);
-            }
-        }));
-
-        await updateDoc(doc(db, "messages", currentGroupId), {
-            lastMessage: textValue,
-            lastMessageSent: firestoreTimestamp(),
-            lastMessageSentBy: auth?.currentUser?.uid,
-        })
-
-
-        const messageRef = collection(doc(db, "messages", currentGroupId), "message");
-
-        addDoc(messageRef, {
-            message: textValue,
-            sentAt: firestoreTimestamp(),
-            sentBy: auth?.currentUser?.uid
-        });
-
-        setTextValue("");
-
-        setMessageSending(false);
-
-    }*/
-
     const addText = (e) => {
         setTextValue(e.target.value);
     }
@@ -251,7 +143,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
 
     const leaveGroup = async () => {
         deleteChat(currentGroupId);
-        let groupData = await getDoc(doc(db, "groups",currentGroupId));
+        let groupData = await getDoc(doc(db, "groups", currentGroupId));
         let myData = await getDoc(doc(db, "users", auth?.currentUser?.uid));
         let newMembers = groupData.data().members.filter(el => el !== myData.data().userId);
         await updateDoc(doc(db, "groups", currentGroupId), {
@@ -259,6 +151,33 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
         })
 
     }
+
+    const compareTimestamps = (obj1, obj2, textLength, index) => {
+        if (obj1 === undefined || obj2 === undefined) return;
+
+        const timestamp1 = moment.unix(obj1?.sentAt?.seconds);
+        const timestamp2 = moment.unix(obj2?.sentAt?.seconds);
+
+        const timeDifference = Math.abs(timestamp2.diff(timestamp1, 'minutes'));
+
+        if (timeDifference > 15 || index == textLength - 1) {
+            // Get the object with the latest timestamp
+            const latestObject = timestamp1.isAfter(timestamp2) ? obj1 : obj2;
+            const latestTimestamp = moment.unix(latestObject?.sentAt?.seconds);
+
+            // Check the difference between now and the latest timestamp
+            const now = moment();
+            const differenceToNow = now.diff(latestTimestamp, 'hours');
+
+            if (differenceToNow > 24) {
+                // Return the time of the object with the latest timestamp in the desired format
+                return latestTimestamp.format("MMM DD, h:mm A");
+            }
+
+            return latestTimestamp.format("h:mm A");
+        }
+    }
+
     return (
         <div className="w-full h-full relative">
             <div
@@ -307,28 +226,34 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
                 </div>
                 {currentMembers.length > 0 && text.map((m, index) => {
                     if (m.sentBy == auth?.currentUser?.uid) {
-                        return <div key={index} className="w-full bg-white flex items-end justify-end px-5 py-2">
-                            <div className={`${isMessageSending && index === 0 ? "bg-red-200" : "bg-red-500"} py-2 px-4 m-2 rounded-xl relative`}>
-                                <p className="text-white font-[600] text-xs md:text-sm">{m.message}</p>
-                                {isMessageSending && index === 0 ?
-                                    <div className="absolute bottom-[-22px] left-[-16px]"><BeatLoader size={8} color="#c91e1e" /></div>
-                                    :
-                                    <p className="text-[10px] absolute bottom-[-16px] left-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
-                                }
+                        return <div key={index} className="flex flex-col">
+                            <div className="w-full flex justify-center">
+                                <p className="text-xs">{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1], text.length, index)}</p>
                             </div>
-                            <img className="w-[42px] h-[42px] rounded-full" src={auth?.currentUser?.photoURL} />
+                            <div className="w-full bg-white flex items-end justify-end px-5 py-2">
+                                <div className={`${isMessageSending && index === 0 ? "bg-red-200" : "bg-red-500"} py-2 px-4 m-2 rounded-xl relative`}>
+                                    <p className="text-white font-[600] text-xs md:text-sm">{m.message}</p>
+                                    {isMessageSending && index === 0 &&
+                                        <div className="absolute bottom-[-22px] left-[-16px]"><BeatLoader size={8} color="#c91e1e" /></div>
+                                    }
+                                </div>
+                                <img className="w-[42px] h-[42px] rounded-full" src={auth?.currentUser?.photoURL} />
+                            </div>
                         </div>
                     } else {
                         let otherMember = currentMembers.find(member => member.userId === m.sentBy);
-                        return <div key={index} className="w-full bg-white flex justify-start items-end px-5 py-2">
-                            <img className="w-[42px] h-[42px] rounded-full" src={otherMember?.photoUrl} />
-                            <div className="bg-[#f0f0f0] py-2 px-4 m-2 relative rounded-xl">
-                                <p className="text-black text-xs md:text-sm">{m.message}</p>
-                                {isMessageSending & index === 0 ?
-                                    <div className="absolute bottom-[-22px] right-[-16px]"><BeatLoader size={8} color="#c91e1e" /></div>
-                                    :
-                                    <p className="text-[10px] absolute bottom-[-16px] right-[-10px]">{formatTime(m?.sentAt?.seconds)}</p>
-                                }
+                        return <div key={index} className="flex flex-col">
+                            <div className="w-full flex justify-center">
+                                <p className="text-xs">{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1], text.length, index)}</p>
+                            </div>
+                            <div className="w-full bg-white flex justify-start items-end px-5 py-2">
+                                <img className="w-[42px] h-[42px] rounded-full" src={otherMember?.photoUrl} />
+                                <div className="bg-[#f0f0f0] py-2 px-4 m-2 relative rounded-xl">
+                                    <p className="text-black text-xs md:text-sm">{m.message}</p>
+                                    {isMessageSending && index === 0 &&
+                                        <div className="absolute bottom-[-22px] right-[-16px]"><BeatLoader size={8} color="#c91e1e" /></div>
+                                    }
+                                </div>
                             </div>
                         </div>
                     }
