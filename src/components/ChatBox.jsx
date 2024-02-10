@@ -10,9 +10,10 @@ import addtochat from "../../public/addtochat.png"
 import crosssign from "../../public/cross-sign.png"
 import trashcan from "../../public/trashcan.png"
 import moment from "moment";
+import { ChatMessage } from "./ChatMessage";
 
 
-export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, deleteChat, currentGroupId, hideChat }) => {
+export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, deleteChat, setMyGroups, currentGroupId, hideChat }) => {
 
     const [loadMoreDocs, setLoadMoreDocs] = useState(0);
     const [text, setText] = useState([]);
@@ -24,15 +25,20 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
     const scrollContainerRef = useRef();
 
     useEffect(() => {
+        if (scrollContainerRef.current) {
+            const scrollContainer = scrollContainerRef.current;
+            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+          }
+    }, [activeChatData]);
+
+    useEffect(() => {
         let foo = async () => {
             if (currentGroupId) {
-                let query1 = query(collection(db, "groups"), where("id", "==", currentGroupId));
-                let groupData = await getDocs(query1);
+                let q = query(collection(db, "groups"), where("id", "==", currentGroupId));
+                let groupData = await getDocs(q);
 
                 groupData.docs[0].data().members.map(async (m) => {
-                    let query2 = query(collection(db, "users"), where("userId", "==", m));
-                    let userData = await getDocs(query2);
-
+                    let userData = await getDocs(query(collection(db, "users"), where("userId", "==", m)));
                     setMembers(prevMember => [...prevMember, userData.docs[0].data()]);
                 })
             }
@@ -78,19 +84,14 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
             );
 
             try {
-                const other_user = await getDocs(q1);
+                const otherUser = await getDocs(q1);
 
-                // Check if any documents are returned
-                if (other_user.docs.length > 0) {
-                    if (other_user.docs[0].data().groups.indexOf(currentGroupId) === -1) {
-                        await updateDoc(doc(db, "users", other_user.docs[0].data().userId), {
+                if (otherUser.docs.length > 0) {
+                    if (otherUser.docs[0].data().groups.indexOf(currentGroupId) === -1) {
+                        await updateDoc(doc(db, "users", otherUser.docs[0].data().userId), {
                             groups: arrayUnion(currentGroupId)
                         })
-                    } else {
-                        //console.log("User is already in the group");
                     }
-                } else {
-                    //console.log("User not found");
                 }
             } catch (error) {
                 console.error("Error loading user data:", error);
@@ -134,25 +135,18 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
         }
     };
 
-    const formatTime = (timestamp) => {
-        const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        if (hours !== "NaN" && minutes !== "NaN") return `${hours}:${minutes}`;
-    };
-
     const leaveGroup = async () => {
-        deleteChat(currentGroupId);
         let groupData = await getDoc(doc(db, "groups", currentGroupId));
         let myData = await getDoc(doc(db, "users", auth?.currentUser?.uid));
         let newMembers = groupData.data().members.filter(el => el !== myData.data().userId);
         await updateDoc(doc(db, "groups", currentGroupId), {
             members: newMembers,
         })
+        deleteChat(currentGroupId);
 
     }
 
-    const compareTimestamps = (obj1, obj2, textLength, index) => {
+    const isDifference = (obj1, obj2, textLength, index) => {
         if (obj1 === undefined || obj2 === undefined) return;
 
         const timestamp1 = moment.unix(obj1?.sentAt?.seconds);
@@ -161,22 +155,43 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
         const timeDifference = Math.abs(timestamp2.diff(timestamp1, 'minutes'));
 
         if (timeDifference > 15 || index == textLength - 1) {
-            // Get the object with the latest timestamp
-            const latestObject = timestamp1.isAfter(timestamp2) ? obj1 : obj2;
-            const latestTimestamp = moment.unix(latestObject?.sentAt?.seconds);
-
-            // Check the difference between now and the latest timestamp
-            const now = moment();
-            const differenceToNow = now.diff(latestTimestamp, 'hours');
-
-            if (differenceToNow > 24) {
-                // Return the time of the object with the latest timestamp in the desired format
-                return latestTimestamp.format("MMM DD, h:mm A");
-            }
-
-            return latestTimestamp.format("h:mm A");
+            return true;
         }
+
+        return false;
     }
+
+    const compareTimestamps = (obj1, obj2) => {
+
+        const timestamp1 = moment.unix(obj1?.sentAt?.seconds);
+        const timestamp2 = moment.unix(obj2?.sentAt?.seconds);
+        // Get the object with the latest timestamp
+        const latestObject = timestamp1.isAfter(timestamp2) ? obj1 : obj2;
+        const latestTimestamp = moment.unix(latestObject?.sentAt?.seconds);
+
+        // Check the difference between now and the latest timestamp
+        const now = moment();
+        const differenceToNow = now.diff(latestTimestamp, 'hours');
+
+        if (differenceToNow > 24) {
+            // Return the time of the object with the latest timestamp in the desired format
+            return latestTimestamp.format("MMM DD, h:mm A");
+        }
+
+        return latestTimestamp.format("h:mm A");
+    }
+
+
+    const isValidUrl = urlString => {
+        const urlRegex = /^(?:https?|ftp):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?|^((?!www\.)[\w-]+\.)+[a-z]{2,6}(:[0-9]{1,5})?([\w/?.#=%&~-]*)?$/i;
+
+        console.log(urlString)
+        console.log(urlRegex.test(urlString))
+        return urlRegex.test(urlString);
+    }
+
+
+
 
     return (
         <div className="w-full h-full relative">
@@ -184,20 +199,20 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 className="w-full h-[95%] overflow-y-scroll rounded-md flex flex-col-reverse pb-[2%]">
-                <div className="w-full bg-white border-b-[1px] shadow-sm flex flex-col space-y-2 absolute py-4 px-8 top-0 z-10">
+                <div className="w-full bg-white border-b-[1px] flex flex-col space-y-2 absolute top-0 z-10 p-2">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <img onClick={hideChat} src={exitchat} className="w-[24px] h-[24px] md:w-[32px] md:h-[32px] cursor-pointer md:hidden" />
+                        <div className="flex items-center">
+                            <img onClick={hideChat} src={exitchat} className="w-6 md:w-[32px] md:h-[32px] cursor-pointer md:hidden mr-4" />
                             <>
-                                <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-[64px] h-[64px] rounded-full" />
+                                <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full mr-4" />
                                 <div className="flex flex-col">
-                                    <p>{activeChatData[0]?.display_name}</p>
+                                    <p className="text-sm">{activeChatData[0]?.display_name}</p>
                                     <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
                                 </div>
                             </>
                         </div>
                         <div className="p-2">
-                            <img onClick={() => setChatMenuOpened(prev => !prev)} className="cursor-pointer w-[24px] h-[24px]" src={threedots} />
+                            <img onClick={() => setChatMenuOpened(prev => !prev)} className="cursor-pointer w-5" src={threedots} />
                             {isChatMenuOpened && <div className="absolute right-6 justify-center flex flex-col border-[1px] bg-white rounded-xl shadow-sm">
                                 <div onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center hover:bg-[#f0f0f0] cursor-pointer p-4 rounded-t-xl">
                                     <img src={addtochat} className="w-[20px] h-[20px]" />
@@ -225,38 +240,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
                     }
                 </div>
                 {currentMembers.length > 0 && text.map((m, index) => {
-                    if (m.sentBy == auth?.currentUser?.uid) {
-                        return <div key={index} className="flex flex-col">
-                            <div className="w-full flex justify-center">
-                                <p className="text-xs">{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1], text.length, index)}</p>
-                            </div>
-                            <div className="w-full bg-white flex items-end justify-end px-5 py-2">
-                                <div className={`${isMessageSending && index === 0 ? "bg-red-200" : "bg-red-500"} py-2 px-4 m-2 rounded-xl relative`}>
-                                    <p className="text-white font-[600] text-xs md:text-sm">{m.message}</p>
-                                    {isMessageSending && index === 0 &&
-                                        <div className="absolute bottom-[-22px] left-[-16px]"><BeatLoader size={8} color="#c91e1e" /></div>
-                                    }
-                                </div>
-                                <img className="w-[42px] h-[42px] rounded-full" src={auth?.currentUser?.photoURL} />
-                            </div>
-                        </div>
-                    } else {
-                        let otherMember = currentMembers.find(member => member.userId === m.sentBy);
-                        return <div key={index} className="flex flex-col">
-                            <div className="w-full flex justify-center">
-                                <p className="text-xs">{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1], text.length, index)}</p>
-                            </div>
-                            <div className="w-full bg-white flex justify-start items-end px-5 py-2">
-                                <img className="w-[42px] h-[42px] rounded-full" src={otherMember?.photoUrl} />
-                                <div className="bg-[#f0f0f0] py-2 px-4 m-2 relative rounded-xl">
-                                    <p className="text-black text-xs md:text-sm">{m.message}</p>
-                                    {isMessageSending && index === 0 &&
-                                        <div className="absolute bottom-[-22px] right-[-16px]"><BeatLoader size={8} color="#c91e1e" /></div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    }
+                    return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1,v2,v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} />
                 })}
                 <div className="w-full flex justify-center py-[200px]">
                     <p className="text-sm md:text-md">You have started a new conversation!</p>
@@ -265,7 +249,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
             </div>
             <div className="w-full h-[5%] border-t-[1px] px-6 py-2 flex space-x-4">
                 <form className="flex space-x-6 w-full">
-                    <input value={textValue} onChange={addText} type="text" className="text-sm md:text-base p-1 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="I love you :)" />
+                    <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm p-1 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="Type message here" />
                     <button type="submit" onClick={sendMessage} className="bg-white rounded-full hover:bg-[#e8e8e8] py-1 px-5 text-sm hover:bg-[#f0f0f0]"><img src={sendmessage} className="w-[16px] h-[16px]" /></button>
                 </form>
             </div>

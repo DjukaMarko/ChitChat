@@ -23,25 +23,28 @@ export const ChatSidebar = ({ usersRef, formatTimeAgo, myUserData, removeFriend,
 
     return (
         <>
-            <div className="flex flex-col space-y-6 p-5">
-                <div className="w-full flex justify-between">
-                    <p className="text-lg md:text-2xl font-[500]">Chats</p>
+            <div className="flex flex-col space-y-6 px-5 py-2">
+                <div className="w-full flex justify-between items-center">
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-lg md:text-2xl font-[500]">Chats</p>
+                        <p className="text-sm text-gray-400">People, Groups, Messages</p>
+                    </div>
                     <div className="cursor-pointer bg-[#f7f7f7] lg:hidden block hover:bg-[#f0f0f0] rounded-full p-2"><img src={hamburger} className="w-[20px] h-[20px]" /></div>
                 </div>
                 <SearchBar usersRef={usersRef} />
-                <div className="flex w-full min-h-[6rem] space-x-6 overflow-x-auto">
+                <div className="flex w-full min-h-[5rem] space-x-2 overflow-x-auto">
                     <FriendBubble r={myUserData} />
                     {myUserData?.friends?.map((r) => (
                         <FriendBubble key={r.userId} removeFriend={() => removeFriend(r.display_name)} r={r} handleClick={() => handleBubble(r)} />
                     ))}
                 </div>
             </div>
-            <div className="flex items-center flex-col space-y-1 h-full overflow-y-auto mt-2 p-5 border-t-[1px]">
+            <div className="flex items-center flex-col h-full overflow-y-auto px-1 py-4">
                 {myGroups.length === 0 ?
 
                     <div className="flex mt-16 flex-col items-center justify-center space-y-6">
-                        <img src={emptychat} className="w-[128px] h-[128px]" />
-                        <p className="text-sm text-center max-w-[50ch] font-[400] tracking-wider">Shhh... Did you hear that? The chat is whispering for some attention. Time to give it a voice!</p>
+                        <img src={emptychat} className="w-24" />
+                        <p className="text-sm text-center max-w-[30ch]">Shhh... Did you hear that? The chat is whispering for some attention. Time to give it a voice!</p>
                     </div>
                     :
                     myGroups.map((item, index) => (

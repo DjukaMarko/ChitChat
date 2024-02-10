@@ -35,25 +35,25 @@ export const SearchBar = ({ usersRef }) => {
   const handleSendRequest = async (r) => {
     try {
       const q = query(usersRef, where("display_name", "==", r));
-      const signed_user = await getDocs(q);
+      const signedUser = await getDocs(q);
 
-      const my_user = await getDoc(doc(db, "users", auth?.currentUser?.uid));
+      const myUser = await getDoc(doc(db, "users", auth?.currentUser?.uid));
 
-      if (signed_user.size > 0) {
-        for (const d of signed_user.docs) {
+      if (signedUser.size > 0) {
+        for (const d of signedUser.docs) {
           const previousRequests = d.data().f_requests;
           const friends = d.data().friends;
 
           if (
-            friends.includes(my_user.data().userId) ||
-            previousRequests.includes(my_user.data().userId) ||
-            my_user.data().f_requests.includes(r)
+            friends.includes(myUser.data().userId) ||
+            previousRequests.includes(myUser.data().userId) ||
+            myUser.data().f_requests.includes(r)
           ) {
             return;
           }
           const newRequestsSet = new Set([
             ...previousRequests,
-            my_user.data().userId,
+            myUser.data().userId,
           ]);
           const newRequests = Array.from(newRequestsSet);
 
