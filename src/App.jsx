@@ -35,10 +35,12 @@ import { SkeletonLoader } from "./components/SkeletonLoader";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { RequestsSidebar } from "./components/RequestsSidebar";
 import { Sidebar } from "./components/Sidebar";
+import useWindowDimensions from "./components/hooks/useWindowDimensions";
 
 
 const cookies = new Cookies();
 function App() {
+  const { height, width } = useWindowDimensions();
   const [isAuth, _] = useState(cookies.get("auth-token"));
   const [isChatOpened, setChatOpen] = useState(false);
   const [selectedSidebar, setSelectedSidebar] = useState(1); // 1 - chat, 2 - friend requests
@@ -58,6 +60,9 @@ function App() {
       </div>
     );
   }
+
+  console.log(width);
+
 
 
   useEffect(() => {
@@ -427,7 +432,7 @@ function App() {
       }
       <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
       <PanelGroup direction="horizontal" className="w-full h-full min-h-screen flex">
-        <Panel defaultSize={20} minSize={20} className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] relative w-full flex-col justify-between`}>
+        <Panel defaultSize={width > 900 ? 40:50} minSize={width > 900 ? 40:50} className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] relative w-full flex-col justify-between`}>
           <div className="flex flex-col h-full max-h-screen">
             {isChatSidebarLoading
               ?

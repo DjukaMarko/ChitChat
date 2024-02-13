@@ -7,9 +7,6 @@ export const ChatMessage = ({ side, isDifference, text, m, index, compareTimesta
     const isValidUrl = urlString => {
         if (urlString === undefined) return;
         const urlRegex = /^(?:https?|ftp):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?|^((?!www\.)[\w-]+\.)+[a-z]{2,6}(:[0-9]{1,5})?([\w/?.#=%&~-]*)?$/i;
-
-        console.log(urlString)
-        console.log(urlRegex.test(urlString))
         return urlRegex.test(urlString);
     }
 
@@ -22,7 +19,7 @@ export const ChatMessage = ({ side, isDifference, text, m, index, compareTimesta
                 </div>
             )}
             {side === 2 && (text[index + 1]?.sentBy !== otherMember?.userId && <img className="w-9 rounded-full mt-4 ml-2" src={otherMember?.photoUrl} />)}
-            <div className={`${(side === 1 ? (isMessageSending && index === 0 ? "bg-red-200" : "bg-red-500") : "bg-[#f0f0f0]")} ${side === 1 ? "mx-6" : "mx-10"}  py-2 px-4 rounded-xl relative max-w-[36ch] break-words`}>
+            <div className={`${(side === 1 ? (isMessageSending && index === 0 ? "bg-red-200" : "bg-red-500") : "bg-[#f0f0f0]")} ${side === 1 ? "mx-6" : "mx-10"}  py-2 px-4 rounded-xl relative max-w-[70%] break-words`}>
                 {isValidUrl(m.message) ? (
                     <a href={m.message.startsWith("http") ? m.message : `https://${m.message}`} className={`${side === 1 ? "text-white" : "text-black"} underline text-xs md:text-sm`} target="_blank" rel="noopener noreferrer">
                         {m.message}
