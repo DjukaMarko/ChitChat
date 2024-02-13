@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { auth, db } from "../config/firebase"
+import { auth, db, storage } from "../config/firebase"
+import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import threedots from "../../public/threedots.png"
+import imagesicon from "../../public/imagesicon.png"
+import attach from "../../public/attach.png"
 import sendmessage from "../../public/send-message.png"
 import exitchat from "../../public/exitchat.png"
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
@@ -12,12 +15,12 @@ import trashcan from "../../public/trashcan.png"
 import moment from "moment";
 import { ChatMessage } from "./ChatMessage";
 
-
-export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, deleteChat, setMyGroups, currentGroupId, hideChat }) => {
+export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, currentGroupId, hideChat }) => {
 
     const [loadMoreDocs, setLoadMoreDocs] = useState(0);
     const [text, setText] = useState([]);
     const [textValue, setTextValue] = useState("");
+    const [fileUploadInput, setFileUploadInput] = useState("");
     const [isMessageSending, setMessageSending] = useState(false);
     const [currentMembers, setMembers] = useState([]);
     const [isMessageLoading, setMessageLoading] = useState(false);
@@ -25,10 +28,57 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
     const scrollContainerRef = useRef();
 
     useEffect(() => {
+        if(fileUploadInput === "") return;
+
+        let sendFiles = async () => {
+            await sendMessage();
+        };
+        sendFiles();
+    }, [fileUploadInput]);
+
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const storageRef = ref(storage, `${currentGroupId}/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on("state_changed",
+            (snapshot) => {
+                const progress =
+                    Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                console.log(progress);
+            },
+            (error) => {
+                console.error(error)
+            },
+            () => {
+                getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+                    setTextValue(downloadURL);
+                    setFileUploadInput(downloadURL);
+                });
+            }
+        );
+    };
+
+    const handleAttachClick = (e) => {
+        e.preventDefault();
+        const fileInput1 = document.getElementById('fileInput1');
+        fileInput1.click();
+    };
+
+    const handleImageUploadClick = (e) => {
+        e.preventDefault();
+        const fileInput2 = document.getElementById('fileInput2');
+        fileInput2.click();
+    };
+
+
+    useEffect(() => {
         if (scrollContainerRef.current) {
             const scrollContainer = scrollContainerRef.current;
             scrollContainer.scrollTop = scrollContainer.scrollHeight;
-          }
+        }
     }, [activeChatData]);
 
     useEffect(() => {
@@ -65,10 +115,14 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
     }, [currentGroupId, loadMoreDocs]);
 
 
-
-
-    const sendMessage = async (e) => {
+    const buttonSendClick = async (e) => {
         e.preventDefault();
+        await sendMessage();
+    }
+
+
+    const sendMessage = async () => {
+        console.log(textValue);
         if (textValue === "") return;
         setMessageSending(true);
         setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
@@ -181,18 +235,6 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
         return latestTimestamp.format("h:mm A");
     }
 
-
-    const isValidUrl = urlString => {
-        const urlRegex = /^(?:https?|ftp):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?|^((?!www\.)[\w-]+\.)+[a-z]{2,6}(:[0-9]{1,5})?([\w/?.#=%&~-]*)?$/i;
-
-        console.log(urlString)
-        console.log(urlRegex.test(urlString))
-        return urlRegex.test(urlString);
-    }
-
-
-
-
     return (
         <div className="w-full h-full relative">
             <div
@@ -240,7 +282,7 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
                     }
                 </div>
                 {currentMembers.length > 0 && text.map((m, index) => {
-                    return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1,v2,v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} />
+                    return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1, v2, v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} />
                 })}
                 <div className="w-full flex justify-center py-[200px]">
                     <p className="text-sm md:text-md">You have started a new conversation!</p>
@@ -248,9 +290,17 @@ export const ChatBox = ({ formatTimeAgo, activeChatData, setMemberListWindow, de
 
             </div>
             <div className="w-full h-[5%] border-t-[1px] px-6 py-2 flex space-x-4">
-                <form className="flex space-x-6 w-full">
+                <form className="flex space-x-6 items-center w-full">
+                    <a className="cursor-pointer" onClick={handleAttachClick}>
+                        <img src={attach} alt="Attach" className="w-6" />
+                    </a>
+                    <a className="cursor-pointer" onClick={handleImageUploadClick}>
+                        <img src={imagesicon} alt="Upload" className="w-6" />
+                    </a>
+                    <input id="fileInput1" type="file" onChange={handleFileUpload} className="hidden" />
+                    <input id="fileInput2" type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
                     <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm p-1 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="Type message here" />
-                    <button type="submit" onClick={sendMessage} className="bg-white rounded-full hover:bg-[#e8e8e8] py-1 px-5 text-sm hover:bg-[#f0f0f0]"><img src={sendmessage} className="w-[16px] h-[16px]" /></button>
+                    <button type="submit" onClick={buttonSendClick} className="bg-white rounded-full hover:bg-[#e8e8e8] py-1 px-5 text-sm hover:bg-[#f0f0f0]"><img src={sendmessage} className="w-[16px] h-[16px]" /></button>
                 </form>
             </div>
         </div>

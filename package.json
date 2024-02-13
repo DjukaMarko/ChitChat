@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.14",
+    "axios": "^1.6.7",
+    "cheerio": "^1.0.0-rc.12",
     "emoji-dictionary": "^1.0.11",
     "firebase": "^9.23.0",
     "firebase-admin": "^11.10.0",

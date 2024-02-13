@@ -59,6 +59,7 @@ function App() {
     );
   }
 
+
   useEffect(() => {
     const fetchGroups = async () => {
       if (!myUserData) return;
@@ -79,11 +80,11 @@ function App() {
 
           setMyGroups((prev) => {
             const updatedGroups = [groupData, ...prev.filter((prevGroup) => prevGroup.id !== groupData.id)];
-            updatedGroups.sort((a,b) => b?.lastMessageSent?.seconds - a?.lastMessageSent?.seconds)
+            updatedGroups.sort((a, b) => b?.lastMessageSent?.seconds - a?.lastMessageSent?.seconds)
             return updatedGroups;
           });
         });
-        
+
         snapshots_to_unmount.push(unsubscribe);
       }));
 
@@ -260,7 +261,7 @@ function App() {
         const myUser = await getDoc(doc(db, "users", auth?.currentUser?.uid));
 
         const q = query(usersRef, where("display_name", "==", r));
-        const otherUser = await getDocs(q);  
+        const otherUser = await getDocs(q);
 
         const myFriends = myUser.data().friends;
         const index = myFriends.indexOf(otherUser.docs[0].data().userId);
