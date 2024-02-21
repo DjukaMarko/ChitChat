@@ -61,10 +61,6 @@ function App() {
     );
   }
 
-  console.log(width);
-
-
-
   useEffect(() => {
     const fetchGroups = async () => {
       if (!myUserData) return;

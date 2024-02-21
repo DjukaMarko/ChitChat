@@ -6,7 +6,7 @@ import imagesicon from "../../public/imagesicon.png"
 import attach from "../../public/attach.png"
 import sendmessage from "../../public/send-message.png"
 import exitchat from "../../public/exitchat.png"
-import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
 import addtochat from "../../public/addtochat.png"
@@ -25,7 +25,19 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
     const [currentMembers, setMembers] = useState([]);
     const [isMessageLoading, setMessageLoading] = useState(false);
     const [isChatMenuOpened, setChatMenuOpened] = useState(false);
+    const [chatLength, setChatLength] = useState(0);
     const scrollContainerRef = useRef();
+
+    useEffect(() => {
+        if(!currentGroupId) return;
+
+        let setGroupData = async () => {
+            let fetchData = await getDoc(doc(db, "groups", currentGroupId));
+            setChatLength(fetchData.data().numMessages || 0);
+        }
+
+        setGroupData();
+    }, [currentGroupId]);
 
     useEffect(() => {
         if(fileUploadInput === "") return;
@@ -47,7 +59,6 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
             (snapshot) => {
                 const progress =
                     Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                console.log(progress);
             },
             (error) => {
                 console.error(error)
@@ -99,10 +110,11 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
 
     useEffect(() => {
         if (currentGroupId === "") return;
+        let threshold = 20 + (loadMoreDocs * 20);
 
         setMessageLoading(true);
         const subcollectionRef = collection(doc(db, "groups", currentGroupId), "messages");
-        const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(20 + (loadMoreDocs * 20)));
+        const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(threshold));
         const unsubscribe = onSnapshot(orderedQuery, (querySnapshot) => {
             setText([]);
             querySnapshot.forEach(async (doc) => {
@@ -112,7 +124,7 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
         });
 
         return () => unsubscribe();
-    }, [currentGroupId, loadMoreDocs]);
+    }, [currentGroupId, loadMoreDocs, chatLength]);
 
 
     const buttonSendClick = async (e) => {
@@ -122,7 +134,6 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
 
 
     const sendMessage = async () => {
-        console.log(textValue);
         if (textValue === "") return;
         setMessageSending(true);
         setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
@@ -156,6 +167,7 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
             lastMessage: textValue,
             lastMessageSent: firestoreTimestamp(),
             lastMessageSentBy: auth?.currentUser?.uid,
+            numMessages: increment(1),
         })
 
 
@@ -185,7 +197,10 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
 
         if ((Math.abs(scrolledFromTop)) >= maxScrollHeight - 2) {
 
-            setLoadMoreDocs(prevDocs => prevDocs + 1);
+            setLoadMoreDocs(prevDocs => {
+                if((prevDocs*20+20) >= chatLength) return prevDocs;
+                else return prevDocs + 1;
+            });
         }
     };
 
