@@ -3,7 +3,7 @@ import { auth } from "../config/firebase"
 
 export const ChatHistory = ({ isSelected, formatTimeAgo, item, index, handleClick }) => {
     return (
-        <div onClick={handleClick} className={`w-full ${isSelected ? "bg-[#f7f7f7]" : ""} rounded-lg cursor-pointer p-2 inline-flex relative space-x-4 hover:bg-[#f0f0f0] cursor-default`} key={index}>
+        <div onClick={handleClick} className={`w-full ${isSelected ? "bg-[#f7f7f7]" : "bg-white"} rounded-lg cursor-pointer p-2 inline-flex relative space-x-4 hover:bg-[#f0f0f0] cursor-default`} key={index}>
 
             <div className="flex space-x-4 items-center">
                 <img src={item?.members[0]?.photoUrl} referrerPolicy="no-referrer" className="w-[50px] h-[50px] rounded-full" />

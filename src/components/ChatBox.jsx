@@ -29,7 +29,7 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
     const scrollContainerRef = useRef();
 
     useEffect(() => {
-        if(!currentGroupId) return;
+        if (!currentGroupId) return;
 
         let setGroupData = async () => {
             let fetchData = await getDoc(doc(db, "groups", currentGroupId));
@@ -40,7 +40,7 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
     }, [currentGroupId]);
 
     useEffect(() => {
-        if(fileUploadInput === "") return;
+        if (fileUploadInput === "") return;
 
         let sendFiles = async () => {
             await sendMessage();
@@ -198,7 +198,7 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
         if ((Math.abs(scrolledFromTop)) >= maxScrollHeight - 2) {
 
             setLoadMoreDocs(prevDocs => {
-                if((prevDocs*20+20) >= chatLength) return prevDocs;
+                if ((prevDocs * 20 + 20) >= chatLength) return prevDocs;
                 else return prevDocs + 1;
             });
         }
@@ -300,7 +300,9 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
                     return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1, v2, v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} />
                 })}
                 <div className="w-full flex justify-center py-[200px]">
-                    <p className="text-sm md:text-md">You have started a new conversation!</p>
+                    {(loadMoreDocs * 20 + 20) >= chatLength &&
+                        <p className="text-sm md:text-md">You have started a new conversation!</p>
+                    }
                 </div>
 
             </div>
