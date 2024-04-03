@@ -1,23 +1,47 @@
 import { useState } from "react"
 import crosssign from "../../public/cross-sign.png"
 import { auth } from "../config/firebase";
+import { Button } from "@/components/ui/button"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuPortal,
+    DropdownMenuSeparator,
+    DropdownMenuShortcut,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { X } from "lucide-react";
 
 export const FriendBubble = ({ removeFriend, r, handleClick }) => {
 
     const [isHovered, setHover] = useState(false);
     return (
-        <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} key={r?.username} className="flex min-w-[5rem] relative cursor-pointer flex-col justify-center items-center space-y-1">
-            {(isHovered && r?.userId !== auth?.currentUser?.uid) && 
-                <div onClick={() => removeFriend()} className="fixed flex space-x-4 justify-center items-center top-[100px] z-[1000] p-4 rounded-xl shadow-sm border-[1px] bg-white">
-                    <img src={crosssign} className="w-[16px] h-[16px]" />
-                    <p className="text-[13px] text-red-700 font-[600]">Remove Friend</p>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <div key={r?.username} className={`flex p-3 rounded-lg ${r?.display_name === auth?.currentUser?.displayName && "bg-black/[.03]" } hover:bg-black/10 relative cursor-pointer flex-col items-center justify-center space-y-2`}>
+                    <div className="flex flex-col items-end relative">
+                        <img src={r?.photoUrl} referrerPolicy="no-referrer" className="w-12 rounded-full border-[1px] border-black/20" />
+                        {r?.activityStatus === "online" && <div className="absolute bottom-0 w-[1.2rem] h-[1.2rem] border-[3px] border-white rounded-full bg-red-800"></div>}
+                    </div>
+                    <p className="text-xs">{r?.display_name}</p>
                 </div>
-            }
-            <div onClick={handleClick} className="flex flex-col items-end relative">
-                <img src={r?.photoUrl} referrerPolicy="no-referrer" className="w-12 rounded-full" />
-                {r?.activityStatus === "online" && <div className="absolute bottom-0 w-[1.2rem] h-[1.2rem] border-[3px] border-white rounded-full bg-red-600"></div>}
-            </div>
-            <p className="text-xs md:text-[11px]">{r?.display_name}</p>
-        </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className={` ${r?.display_name === auth?.currentUser?.displayName && "hidden" }`}>
+                <DropdownMenuGroup>
+                    <DropdownMenuItem className="p-2" onClick={handleClick}>
+                        Start Chat
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-800 font-bold p-2" onClick={() => removeFriend()}>
+                        Remove Friend
+                    </DropdownMenuItem>
+                </DropdownMenuGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
     )
 }

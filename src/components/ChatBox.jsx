@@ -2,18 +2,24 @@ import { useEffect, useRef, useState } from "react";
 import { auth, db, storage } from "../config/firebase"
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import threedots from "../../public/threedots.png"
-import imagesicon from "../../public/imagesicon.png"
-import attach from "../../public/attach.png"
-import sendmessage from "../../public/send-message.png"
+import newchat from "../../public/newchat.svg"
 import exitchat from "../../public/exitchat.png"
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
-import addtochat from "../../public/addtochat.png"
-import crosssign from "../../public/cross-sign.png"
-import trashcan from "../../public/trashcan.png"
 import moment from "moment";
 import { ChatMessage } from "./ChatMessage";
+import { motion } from "framer-motion";
+
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Images, Paperclip, SendHorizontal, Trash2, UserRoundPlus } from "lucide-react";
+
 
 export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, currentGroupId, hideChat }) => {
 
@@ -93,6 +99,7 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
     }, [activeChatData]);
 
     useEffect(() => {
+
         let foo = async () => {
             if (currentGroupId) {
                 let q = query(collection(db, "groups"), where("id", "==", currentGroupId));
@@ -105,14 +112,12 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
             }
         }
 
-        foo();
-    }, [currentGroupId]);
-
-    useEffect(() => {
         if (currentGroupId === "") return;
         let threshold = 20 + (loadMoreDocs * 20);
 
         setMessageLoading(true);
+
+        foo();
         const subcollectionRef = collection(doc(db, "groups", currentGroupId), "messages");
         const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(threshold));
         const unsubscribe = onSnapshot(orderedQuery, (querySnapshot) => {
@@ -256,38 +261,43 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 className="w-full h-[95%] overflow-y-scroll rounded-md flex flex-col-reverse pb-[2%]">
-                <div className="w-full bg-white border-b-[1px] flex flex-col space-y-2 absolute top-0 z-10 p-2">
+                <div className="w-full bg-white border-b-[1px] border-black/5 flex flex-col space-y-2 absolute top-0 z-[2] p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
                             <img onClick={hideChat} src={exitchat} className="w-6 md:w-[32px] md:h-[32px] cursor-pointer md:hidden mr-4" />
                             <>
                                 <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full mr-4" />
-                                <div className="flex flex-col">
+                                <div className="flex flex-col space-y-1">
                                     <p className="text-sm">{activeChatData[0]?.display_name}</p>
                                     <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
                                 </div>
                             </>
                         </div>
                         <div className="p-2">
-                            <img onClick={() => setChatMenuOpened(prev => !prev)} className="cursor-pointer w-5" src={threedots} />
-                            {isChatMenuOpened && <div className="absolute right-6 justify-center flex flex-col border-[1px] bg-white rounded-xl shadow-sm">
-                                <div onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center hover:bg-[#f0f0f0] cursor-pointer p-4 rounded-t-xl">
-                                    <img src={addtochat} className="w-[20px] h-[20px]" />
-                                    <p className="text-[14px] font-[500]">Add Member</p>
-                                </div>
-                                {activeChatData.length > 1 ?
-                                    <div onClick={() => leaveGroup()} className="flex space-x-4 items-center hover:bg-[#f0f0f0] cursor-pointer p-4 rounded-b-xl">
-                                        <img src={crosssign} className="w-[20px] h-[20px]" />
-                                        <p className="text-[14px] text-red-800 font-[600]">Leave Group</p>
-                                    </div>
-                                    :
-
-                                    <div onClick={() => deleteChat(currentGroupId)} className="flex space-x-4 items-center hover:bg-[#f0f0f0] cursor-pointer p-4 rounded-b-xl">
-                                        <img src={trashcan} className="w-[20px] h-[20px]" />
-                                        <p className="text-[14px] text-red-800 font-[600]">Delete Chat</p>
-                                    </div>
-                                }
-                            </div>}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <img className="cursor-pointer w-5" src={threedots} />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center cursor-pointer p-2">
+                                            <UserRoundPlus />
+                                            <p>Add Member</p>
+                                        </DropdownMenuItem>
+                                        {activeChatData.length > 1 ?
+                                            <DropdownMenuItem onClick={() => leaveGroup()} className="flex space-x-4 items-center cursor-pointer p-2">
+                                                <X color="#991b1b" />
+                                                <p className="text-red-800 font-bold">Leave Group</p>
+                                            </DropdownMenuItem>
+                                            :
+                                            <DropdownMenuItem onClick={() => deleteChat(currentGroupId)} className="flex space-x-4 items-center cursor-pointer p-2">
+                                                <Trash2 color="#991b1b" />
+                                                <p className="text-red-800 font-bold">Delete Chat</p>
+                                            </DropdownMenuItem>
+                                        }
+                                    </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
                     {isMessageLoading &&
@@ -299,25 +309,28 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
                 {currentMembers.length > 0 && text.map((m, index) => {
                     return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1, v2, v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} />
                 })}
-                <div className="w-full flex justify-center py-[200px]">
-                    {(loadMoreDocs * 20 + 20) >= chatLength &&
-                        <p className="text-sm md:text-md">You have started a new conversation!</p>
-                    }
+                <div className="w-full flex justify-center pt-48 pb-16">
+                    {(loadMoreDocs * 20 + 20) >= chatLength && !isMessageLoading && (
+                        <div className="flex flex-col items-center justify-center">
+                            <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
+                            <p className="text-sm md:text-md max-w-[40ch] text-center">Welcome to the conversation! Write something down to start the convo.</p>
+                        </div>
+                    )}
                 </div>
 
             </div>
             <div className="w-full h-[5%] border-t-[1px] px-6 py-2 flex space-x-4">
                 <form className="flex space-x-6 items-center w-full">
-                    <a className="cursor-pointer" onClick={handleAttachClick}>
-                        <img src={attach} alt="Attach" className="w-6" />
-                    </a>
-                    <a className="cursor-pointer" onClick={handleImageUploadClick}>
-                        <img src={imagesicon} alt="Upload" className="w-6" />
-                    </a>
+                    <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleAttachClick}>
+                        <Paperclip width={20} height={20} color="#991b1b" />
+                    </motion.a>
+                    <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleImageUploadClick}>
+                        <Images width={20} height={20} color="#991b1b" />
+                    </motion.a>
                     <input id="fileInput1" type="file" onChange={handleFileUpload} className="hidden" />
                     <input id="fileInput2" type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
-                    <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm p-1 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="Type message here" />
-                    <button type="submit" onClick={buttonSendClick} className="bg-white rounded-full hover:bg-[#e8e8e8] py-1 px-5 text-sm hover:bg-[#f0f0f0]"><img src={sendmessage} className="w-[16px] h-[16px]" /></button>
+                    <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm p-2 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="Type message here" />
+                    <motion.button whileHover={{ scale: 1.05 }} type="submit" onClick={buttonSendClick}><SendHorizontal width={20} height={20} color="#991b1b" /></motion.button>
                 </form>
             </div>
         </div>

@@ -19,16 +19,16 @@ export const Sidebar = ({ selectedSidebar, setSelectedSidebar, cookies }) => {
 
 
     return (
-        <div className="hidden lg:flex lg:w-[80px] flex-col justify-between h-full min-h-screen border-r-[1px] py-2 px-4">
+        <div className="hidden lg:flex lg:w-[80px] flex-col justify-between h-full min-h-screen border-r-[1px] border-black/5 py-2 px-4">
             <div className="flex flex-col">
-                <div onClick={() => setSelectedSidebar(1)} className={`p-3 space-y-4 cursor-pointer bg-[${selectedSidebar === 1 ? "#f0f0f0" : "#f7f7f7"}] hover:bg-[#f0f0f0] rounded-t-xl`}>
+                <div onClick={() => setSelectedSidebar(1)} className={`p-3 space-y-4 cursor-pointer ${selectedSidebar === 1 ? "bg-black/10" : "bg-black/5"} hover:bg-black/10 rounded-t-xl`}>
                     <img src={chaticon} />
                 </div>
-                <div onClick={() => setSelectedSidebar(2)} className={`p-3 space-y-4 cursor-pointer bg-[${selectedSidebar === 2 ? "#f0f0f0" : "#f7f7f7"}] hover:bg-[#f0f0f0] rounded-b-xl`}>
+                <div onClick={() => setSelectedSidebar(2)} className={`p-3 space-y-4 cursor-pointer ${selectedSidebar === 2 ? "bg-black/10" : "bg-black/5"} hover:bg-black/10 rounded-b-xl`}>
                     <img src={requestsimg} />
                 </div>
             </div>
-            <div onClick={handleSignOut} className={`p-3 space-y-4 cursor-pointer bg-[#f7f7f7] hover:bg-[#f0f0f0] rounded-full`}>
+            <div onClick={handleSignOut} className={`p-3 space-y-4 cursor-pointer bg-black/5 hover:bg-black/10 rounded-xl`}>
                 <img src={signout} />
             </div>
         </div>
