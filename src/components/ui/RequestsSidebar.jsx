@@ -1,9 +1,12 @@
-import hamburger from "../../public/hamburger.png"
-import emptyrequests from "../../public/emptyrequests.svg"
-import acceptrequest from "../../public/acceptrequest.png"
-import removerequest from "../../public/removerequest.png"
+import emptyrequests from "../../../public/emptyrequests.svg"
+import acceptrequest from "../../../public/acceptrequest.png"
+import removerequest from "../../../public/removerequest.png"
+import { Menu } from "lucide-react"
+import { PageContext } from "../misc/PageContext"
+import { useContext } from "react"
 
-export const RequestsSidebar = ({ myUserData, acceptRequest, removeRequest}) => {
+export const RequestsSidebar = ({ acceptRequest, removeRequest}) => {
+    const { myUserData } = useContext(PageContext);
 
     const handleAccept = (display_name) => {
         acceptRequest(display_name);
@@ -12,12 +15,13 @@ export const RequestsSidebar = ({ myUserData, acceptRequest, removeRequest}) => 
     const handleReject = (display_name) => {
         removeRequest(display_name);
     }
+
     return (
         <>
-            <div className="flex flex-col space-y-8 p-6">
+            <div className="flex flex-col space-y-8 p-4">
                 <div className="w-full flex justify-between">
                     <p className="text-lg md:text-2xl font-[500]">Requests</p>
-                    <div className="cursor-pointer bg-[#f7f7f7] lg:hidden block hover:bg-[#f0f0f0] rounded-full p-2"><img src={hamburger} className="w-[20px] h-[20px]" /></div>
+                    <div className="cursor-pointer bg-[#f7f7f7] lg:hidden block hover:bg-[#f0f0f0] rounded-full p-2"><Menu /></div>
                 </div>
                 {myUserData?.f_requests?.length == 0 ?
                 

@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import "./App.css";
-import { Auth } from "./components/Auth";
+import { Auth } from "./components/ui/Auth";
 import Cookies from "universal-cookie";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db, real_db } from "./config/firebase";
-import drag from "../public/drag.png"
-import add from "../public/add.png"
 import moment from 'moment';
 import emptycart from "../public/landing404illustration.svg"
 import emptylist from "../public/404illustration.jpg"
@@ -31,19 +29,21 @@ import {
   serverTimestamp,
   onValue,
 } from "firebase/database";
-import { ChatBox } from "./components/ChatBox";
-import { SkeletonLoader } from "./components/SkeletonLoader";
-import { ChatSidebar } from "./components/ChatSidebar";
-import { RequestsSidebar } from "./components/RequestsSidebar";
-import { Sidebar } from "./components/Sidebar";
+import { ChatBox } from "./components/ui/ChatBox";
+import { SkeletonLoader } from "./components/ui/SkeletonLoader";
+import { ChatSidebar } from "./components/ui/ChatSidebar";
+import { RequestsSidebar } from "./components/ui/RequestsSidebar";
+import { Sidebar } from "./components/ui/Sidebar";
 import useWindowDimensions from "./components/hooks/useWindowDimensions";
-import Modal from "./components/Modal";
+import Modal from "./components/ui/Modal";
 import { Button } from "@/components/ui/button";
+import { PageContext } from "./components/misc/PageContext";
+import { CirclePlus, GripVertical } from "lucide-react";
 
 
 const cookies = new Cookies();
 function App() {
-  const { height, width } = useWindowDimensions(); // height unused
+  const { width } = useWindowDimensions();
   const [isAuth, _] = useState(cookies.get("auth-token"));
   const [isChatOpened, setChatOpen] = useState(false);
   const [selectedSidebar, setSelectedSidebar] = useState(1); // 1 - chat, 2 - friend requests
@@ -66,8 +66,9 @@ function App() {
 
   useEffect(() => {
     const fetchGroups = async () => {
-      if (!myUserData) return;
-      if (myUserData.groups === undefined) return;
+      if (!myUserData || typeof myUserData.groups === "undefined") return;
+      if (myUserData.groups.length === 0) setChatSidebarLoading(false);
+
       let snapshots_to_unmount = [];
 
       await Promise.all(myUserData.groups.map(async group => {
@@ -91,8 +92,6 @@ function App() {
 
         snapshots_to_unmount.push(unsubscribe);
       }));
-
-      setChatSidebarLoading(false);
       return () => {
         snapshots_to_unmount.forEach(unsub => {
           unsub();
@@ -102,6 +101,12 @@ function App() {
 
     fetchGroups();
   }, [myUserData]);
+
+
+  useEffect(() => {
+    if (myGroups.length > 0) setChatSidebarLoading(false);
+  }, [myGroups]);
+
 
 
 
@@ -382,6 +387,82 @@ function App() {
     }
   }
 
+
+  return (
+    <div className="w-full h-screen-safe relative flex">
+      <PageContext.Provider
+        value={{
+          width,
+          myUserData,
+          myGroups,
+          currentGroupId,
+          activeChatData,
+          memberListWindow,
+          setMemberListWindow,
+          selectedChat,
+          deleteChat,
+          formatTimeAgo
+        }}
+      >
+
+        <Modal isShown={memberListWindow} setShown={setMemberListWindow}>
+          <ModalList />
+        </Modal>
+        <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
+        <PanelGroup direction="horizontal" className="w-full h-screen-safe flex">
+          <Panel
+            defaultSize={width > 900 ? 40 : 50}
+            minSize={width > 900 ? 40 : 50}
+            className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between`}>
+
+            <div className="flex flex-col w-full h-full">
+              {isChatSidebarLoading
+                ?
+                <SkeletonLoader />
+                :
+                selectedSidebar === 1 ?
+                  <ChatSidebar
+                    usersRef={usersRef}
+                    setActiveChatData={(v) => setActiveChatData(v)}
+                    handleChat={(v) => handleChat(v)}
+                    setChatOpen={(v) => setChatOpen(v)}
+                    removeFriend={(r) => handleRemoveFriend(r)}
+                    setCurrentGroupId={(v) => setCurrentGroupId(v)}
+                    setSelectedChat={(v) => setSelectedChat(v)}
+                  />
+                  :
+                  <RequestsSidebar
+                    acceptRequest={(r) => handleAccept(r)}
+                    removeRequest={(r) => handleReject(r)} />
+
+              }
+            </div>
+          </Panel>
+          <PanelResizeHandle className="items-center hidden md:flex bg-[#f7f7f7] relative">
+            <div className="absolute -right-4 cursor-pointer bg-white border-[1px] p-2 rounded-full w-8 h-8 z-[1] flex items-center justify-center">
+              <GripVertical className="w-4 h-4" />
+            </div>
+          </PanelResizeHandle>
+          <Panel minSize={35} className={(isChatOpened ? "w-full max-h-screen" : "hidden md:flex justify-center items-center w-full max-h-screen")}>
+            {
+              isChatOpened || currentGroupId !== "" ? (
+                <ChatBox
+                  setMemberListWindow={(v) => setMemberListWindow(v)}
+                  hideChat={hideChat} />
+              ) :
+                <EmptyChatWindow />
+            }
+          </Panel>
+        </PanelGroup>
+      </PageContext.Provider>
+    </div>
+  );
+}
+
+
+const ModalList = () => {
+  const { myUserData, setMemberListWindow, activeChatData } = useContext(PageContext);
+
   const handleAddMember = async (item, index) => {
     if (!item || item.userId === undefined) return;
 
@@ -402,86 +483,48 @@ function App() {
     return false;
   }
 
-
   return (
-    <div className="w-full h-full min-h-screen relative flex">
-      <Modal isShown={memberListWindow} setShown={setMemberListWindow}>
-        {myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).length === 0 ? (
-          <div className="w-full p-6 h-full flex flex-col justify-center items-center space-y-6">
-            <img src={emptylist} className="w-52" />
-            <div className="flex flex-col justify-center items-center text-sm">
-              <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
-              <p className="font-[400] tracking-wide">Let's add some friends first!</p>
+    <>
+      { myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).length === 0 ? (
+        <div className="w-full p-6 h-full flex flex-col justify-center items-center space-y-6">
+          <img src={emptylist} className="w-52" />
+          <div className="flex flex-col justify-center items-center text-sm">
+            <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
+            <p className="font-[400] tracking-wide">Let's add some friends first!</p>
+          </div>
+          <Button className="bg-red-800 hover:bg-red-700" onClick={() => setMemberListWindow(false)}>Close</Button>
+        </div>
+      ) : (
+        myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).map((item, index) => (
+          <div key={item?.userId} className="w-full sm:w-[20rem] flex justify-between items-center hover:bg-[#f0f0f0] cursor-pointer p-2 rounded-xl">
+            <div className="flex space-x-4 items-center">
+              <img src={item?.photoUrl} referrerPolicy="no-referrer" className="w-[50px] h-[50px] rounded-full" />
+              <p className="text-sm md:text-md">{item?.display_name}</p>
             </div>
-            <Button className="bg-red-800 hover:bg-red-700" onClick={() => setMemberListWindow(false)}>Close</Button>
+            <button onClick={(event) => {
+              handleAddMember(item, index)
+              event.currentTarget.disabled = true;
+            }} className="disabled:cursor-not-allowed disabled:opacity-50"><CirclePlus /></button>
           </div>
-        ) : (
-          myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).map((item, index) => (
-            <div key={item?.userId} className="w-full sm:w-[20rem] flex justify-between items-center hover:bg-[#f0f0f0] cursor-pointer p-2 rounded-xl">
-              <div className="flex space-x-4 items-center">
-                <img src={item?.photoUrl} referrerPolicy="no-referrer" className="w-[50px] h-[50px] rounded-full" />
-                <p className="text-sm md:text-md">{item?.display_name}</p>
-              </div>
-              <button onClick={(event) => {
-                handleAddMember(item, index)
-                event.currentTarget.disabled = true;
-              }} className="disabled:cursor-not-allowed disabled:opacity-50"><img src={add} className="w-[24px] h-[24px]" /> </button>
-            </div>
-          ))
-        )}
-      </Modal>
-      <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
-      <PanelGroup direction="horizontal" className="w-full h-full min-h-screen flex">
-        <Panel defaultSize={width > 900 ? 40 : 50} minSize={width > 900 ? 40 : 50} className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between`}>
-          <div className="flex flex-col h-full max-h-screen">
-            {isChatSidebarLoading
-              ?
-              <SkeletonLoader />
-              :
-              selectedSidebar === 1 ?
-                <ChatSidebar
-                  deleteChat={(id) => deleteChat(id)}
-                  currentGroupId={currentGroupId}
-                  usersRef={usersRef}
-                  formatTimeAgo={(t) => formatTimeAgo(t)}
-                  myUserData={myUserData}
-                  myGroups={myGroups}
-                  selectedChat={selectedChat}
-                  setActiveChatData={(v) => setActiveChatData(v)}
-                  handleChat={(v) => handleChat(v)}
-                  setChatOpen={(v) => setChatOpen(v)}
-                  removeFriend={(r) => handleRemoveFriend(r)}
-                  setCurrentGroupId={(v) => setCurrentGroupId(v)}
-                  setSelectedChat={(v) => setSelectedChat(v)}
-                />
-                :
-                <RequestsSidebar myUserData={myUserData} acceptRequest={(r) => handleAccept(r)} removeRequest={(r) => handleReject(r)} />
-
-            }
-          </div>
-        </Panel>
-        <PanelResizeHandle className="items-center hidden md:flex bg-[#f7f7f7] relative">
-          <div className="absolute -right-4 cursor-pointer bg-white border-[1px] p-2 rounded-full w-8 h-8 z-[1]">
-            <img src={drag} className="w-full h-full" alt="Resize" />
-          </div>
-        </PanelResizeHandle>
-        <Panel minSize={35} className={(isChatOpened ? "w-full max-h-screen" : "hidden md:flex justify-center items-center w-full max-h-screen")}>
-          {
-            isChatOpened || currentGroupId !== "" ? (
-              <ChatBox setMyGroups={(v) => setMyGroups(v)} setMemberListWindow={(v) => setMemberListWindow(v)} formatTimeAgo={(t) => formatTimeAgo(t)} activeChatData={activeChatData} currentGroupId={currentGroupId} deleteChat={id => deleteChat(id)} hideChat={hideChat} />
-            ) :
-              <div className="flex flex-col justify-center items-center space-y-6">
-                <img src={emptycart} className="w-64" />
-                <div className="flex flex-col justify-center items-center text-sm">
-                  <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
-                  <p className="font-[400] tracking-wide">Start a conversation and break the silence!</p>
-                </div>
-              </div>
-          }
-        </Panel>
-      </PanelGroup>
-    </div>
-  );
+        ))
+      )}
+    </>
+  )
 }
 
+const EmptyChatWindow = () => {
+  return (
+    <div className="flex flex-col justify-center items-center space-y-6">
+      <img src={emptycart} className="w-32 sm:w-64" />
+      <div className="flex flex-col justify-center items-center text-sm">
+        <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
+        <p className="font-[400] tracking-wide">Start a conversation and break the silence!</p>
+      </div>
+    </div>
+  )
+}
+
+
+
 export default App;
+

@@ -1,5 +1,3 @@
-import search from "../../public/search.png"
-import arrow from "../../public/arrow.png"
 import { MousePointerClick, Search } from "lucide-react"
 
 export const SearchInput = ({ searchInput, setSearchInput, handleSearchSubmit }) => {

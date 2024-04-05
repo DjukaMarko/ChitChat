@@ -70,7 +70,14 @@
   * {
     @apply border-border;
   }
+  html {
+		height: -webkit-fill-available;
+	}
   body {
     @apply bg-background text-foreground;
+    height: -webkit-fill-available;
   }
+  #root {
+		height: -webkit-fill-available;
+	}
 }

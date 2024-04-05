@@ -1,26 +1,13 @@
-import { useState } from "react"
-import crosssign from "../../public/cross-sign.png"
-import { auth } from "../config/firebase";
-import { Button } from "@/components/ui/button"
+import { auth } from "../../config/firebase";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuPortal,
-    DropdownMenuSeparator,
-    DropdownMenuShortcut,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { X } from "lucide-react";
 
 export const FriendBubble = ({ removeFriend, r, handleClick }) => {
-
-    const [isHovered, setHover] = useState(false);
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>

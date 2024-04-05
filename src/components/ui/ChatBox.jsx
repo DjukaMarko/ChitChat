@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { auth, db, storage } from "../config/firebase"
+import { useContext, useEffect, useRef, useState } from "react";
+import { auth, db, storage } from "../../config/firebase"
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
-import threedots from "../../public/threedots.png"
-import newchat from "../../public/newchat.svg"
-import exitchat from "../../public/exitchat.png"
+import newchat from "../../../public/newchat.svg"
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
@@ -18,10 +16,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Images, Paperclip, SendHorizontal, Trash2, UserRoundPlus } from "lucide-react";
+import { ChevronLeft, Ellipsis, Images, Paperclip, SendHorizontal, Trash2, UserRoundPlus } from "lucide-react";
+import { PageContext } from "../misc/PageContext";
 
 
-export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, currentGroupId, hideChat }) => {
+export const ChatBox = ({ setMemberListWindow, hideChat }) => {
+    const { activeChatData, deleteChat, currentGroupId } = useContext(PageContext);
 
     const [loadMoreDocs, setLoadMoreDocs] = useState(0);
     const [text, setText] = useState([]);
@@ -29,8 +29,7 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
     const [fileUploadInput, setFileUploadInput] = useState("");
     const [isMessageSending, setMessageSending] = useState(false);
     const [currentMembers, setMembers] = useState([]);
-    const [isMessageLoading, setMessageLoading] = useState(false);
-    const [isChatMenuOpened, setChatMenuOpened] = useState(false);
+    const [isMessageLoading, setMessageLoading] = useState(true);
     const [chatLength, setChatLength] = useState(0);
     const scrollContainerRef = useRef();
 
@@ -80,14 +79,14 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
 
     const handleAttachClick = (e) => {
         e.preventDefault();
-        const fileInput1 = document.getElementById('fileInput1');
-        fileInput1.click();
+        const attachedFile = document.getElementById('fileInput1');
+        attachedFile.click();
     };
 
     const handleImageUploadClick = (e) => {
         e.preventDefault();
-        const fileInput2 = document.getElementById('fileInput2');
-        fileInput2.click();
+        const attachedImage = document.getElementById('fileInput2');
+        attachedImage.click();
     };
 
 
@@ -99,8 +98,8 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
     }, [activeChatData]);
 
     useEffect(() => {
-
-        let foo = async () => {
+        setMessageLoading(true);
+        let fetchMembers = async () => {
             if (currentGroupId) {
                 let q = query(collection(db, "groups"), where("id", "==", currentGroupId));
                 let groupData = await getDocs(q);
@@ -115,9 +114,8 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
         if (currentGroupId === "") return;
         let threshold = 20 + (loadMoreDocs * 20);
 
-        setMessageLoading(true);
+        fetchMembers();
 
-        foo();
         const subcollectionRef = collection(doc(db, "groups", currentGroupId), "messages");
         const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(threshold));
         const unsubscribe = onSnapshot(orderedQuery, (querySnapshot) => {
@@ -127,9 +125,11 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
             });
             setMessageLoading(false);
         });
-
+        
         return () => unsubscribe();
     }, [currentGroupId, loadMoreDocs, chatLength]);
+
+
 
 
     const buttonSendClick = async (e) => {
@@ -137,9 +137,14 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
         await sendMessage();
     }
 
+    const hasOnlyBlankSpaces = (str) => {
+        const regex = /^\s*$/;
+        return regex.test(str);
+    }
+
 
     const sendMessage = async () => {
-        if (textValue === "") return;
+        if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
         setMessageSending(true);
         setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
 
@@ -148,13 +153,11 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
         })
 
         await Promise.all(activeChatData.map(async item => {
-            const q1 = query(
-                collection(db, "users"),
-                where('display_name', '==', item.display_name)
-            );
-
             try {
-                const otherUser = await getDocs(q1);
+                const otherUser = await getDocs(query(
+                    collection(db, "users"),
+                    where('display_name', '==', item.display_name)
+                ));
 
                 if (otherUser.docs.length > 0) {
                     if (otherUser.docs[0].data().groups.indexOf(currentGroupId) === -1) {
@@ -227,8 +230,8 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
         const timestamp2 = moment.unix(obj2?.sentAt?.seconds);
 
         const timeDifference = Math.abs(timestamp2.diff(timestamp1, 'minutes'));
-
-        if (timeDifference > 15 || index == textLength - 1) {
+    
+        if (timeDifference > 15 || index === textLength - 1) {
             return true;
         }
 
@@ -236,90 +239,117 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
     }
 
     const compareTimestamps = (obj1, obj2) => {
-
         const timestamp1 = moment.unix(obj1?.sentAt?.seconds);
         const timestamp2 = moment.unix(obj2?.sentAt?.seconds);
+        const now = moment();
+    
         // Get the object with the latest timestamp
         const latestObject = timestamp1.isAfter(timestamp2) ? obj1 : obj2;
         const latestTimestamp = moment.unix(latestObject?.sentAt?.seconds);
-
-        // Check the difference between now and the latest timestamp
-        const now = moment();
-        const differenceToNow = now.diff(latestTimestamp, 'hours');
-
-        if (differenceToNow > 24) {
-            // Return the time of the object with the latest timestamp in the desired format
-            return latestTimestamp.format("MMM DD, h:mm A");
+    
+        // Check if the latest timestamp is today
+        if (latestTimestamp.isSame(now, 'day')) {
+            // Return hours and minutes
+            return latestTimestamp.format("h:mm A");
         }
-
-        return latestTimestamp.format("h:mm A");
+    
+        // Check if the latest timestamp is yesterday
+        if (latestTimestamp.isSame(now.clone().subtract(1, 'day'), 'day')) {
+            // Return 'Yesterday' with hours and minutes
+            return "Yesterday, " + latestTimestamp.format("h:mm A");
+        }
+    
+        // Return the whole date
+        return latestTimestamp.format("MMM DD, h:mm A");
     }
 
+    const returnTimestampFirstMessage = (obj1) => {
+        const timestamp = moment.unix(obj1?.sentAt?.seconds);
+        const now = moment();
+    
+        // Check if the timestamp is today
+        if (timestamp.isSame(now, 'day')) {
+            // Return hours and minutes
+            return timestamp.format("h:mm A");
+        }
+    
+        // Check if the timestamp is yesterday
+        if (timestamp.isSame(now.clone().subtract(1, 'day'), 'day')) {
+            // Return 'Yesterday' with hours and minutes
+            return "Yesterday, " + timestamp.format("h:mm A");
+        }
+    
+        // Return the whole date
+        return timestamp.format("MMM DD, h:mm A");
+    }
+    
+    
+
     return (
-        <div className="w-full h-full relative">
+        <div className="w-full h-full max-h-screen-safe relative flex flex-col">
+            <div className="relative w-full bg-white border-b-[1px] border-black/5 z-[2]">
+                <div className="flex items-center justify-between p-4 sm:p-5">
+                    <div className="flex items-center">
+                        <ChevronLeft onClick={hideChat} className="md:hidden cursor-pointer mr-4" />
+                        <>
+                            <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full mr-4" />
+                            <div className="flex flex-col space-y-1">
+                                <p className="text-sm">{activeChatData[0]?.display_name}</p>
+                                <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
+                            </div>
+                        </>
+                    </div>
+                    <div className="p-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Ellipsis className="cursor-pointer" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="m-2">
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center cursor-pointer p-2">
+                                        <UserRoundPlus className="w-5 h-5" />
+                                        <p>Add Member</p>
+                                    </DropdownMenuItem>
+                                    {activeChatData.length > 1 ?
+                                        <DropdownMenuItem onClick={() => leaveGroup()} className="flex space-x-4 items-center cursor-pointer p-2">
+                                            <X color="#991b1b" className="w-5 h-5" />
+                                            <p className="text-red-800 font-bold">Leave Group</p>
+                                        </DropdownMenuItem>
+                                        :
+                                        <DropdownMenuItem onClick={() => deleteChat(currentGroupId)} className="flex space-x-4 items-center cursor-pointer p-2">
+                                            <Trash2 color="#991b1b" className="w-5 h-5" />
+                                            <p className="text-red-800 font-bold">Delete Chat</p>
+                                        </DropdownMenuItem>
+                                    }
+                                </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
+                {isMessageLoading &&
+                    <div className="absolute bg-white border-t-[1px] border-black/5 p-2 w-full flex justify-center items-center">
+                        <BeatLoader color="#c91e1e" />
+                    </div>
+                }
+            </div>
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="w-full h-[95%] overflow-y-scroll rounded-md flex flex-col-reverse pb-[2%]">
-                <div className="w-full bg-white border-b-[1px] border-black/5 flex flex-col space-y-2 absolute top-0 z-[2] p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <img onClick={hideChat} src={exitchat} className="w-6 md:w-[32px] md:h-[32px] cursor-pointer md:hidden mr-4" />
-                            <>
-                                <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full mr-4" />
-                                <div className="flex flex-col space-y-1">
-                                    <p className="text-sm">{activeChatData[0]?.display_name}</p>
-                                    <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
-                                </div>
-                            </>
-                        </div>
-                        <div className="p-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <img className="cursor-pointer w-5" src={threedots} />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuGroup>
-                                        <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center cursor-pointer p-2">
-                                            <UserRoundPlus />
-                                            <p>Add Member</p>
-                                        </DropdownMenuItem>
-                                        {activeChatData.length > 1 ?
-                                            <DropdownMenuItem onClick={() => leaveGroup()} className="flex space-x-4 items-center cursor-pointer p-2">
-                                                <X color="#991b1b" />
-                                                <p className="text-red-800 font-bold">Leave Group</p>
-                                            </DropdownMenuItem>
-                                            :
-                                            <DropdownMenuItem onClick={() => deleteChat(currentGroupId)} className="flex space-x-4 items-center cursor-pointer p-2">
-                                                <Trash2 color="#991b1b" />
-                                                <p className="text-red-800 font-bold">Delete Chat</p>
-                                            </DropdownMenuItem>
-                                        }
-                                    </DropdownMenuGroup>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    </div>
-                    {isMessageLoading &&
-                        <div className="w-full flex justify-center items-center p-4">
-                            <BeatLoader color="#c91e1e" />
-                        </div>
-                    }
-                </div>
+                className="w-full h-full overflow-y-scroll flex flex-col-reverse py-6">
                 {currentMembers.length > 0 && text.map((m, index) => {
-                    return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1, v2, v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} />
+                    return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1, v2, v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} returnTimestampFirstMessage={(v1) => returnTimestampFirstMessage(v1)} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} isMessageLoading={isMessageLoading} />
                 })}
-                <div className="w-full flex justify-center pt-48 pb-16">
+                <div className={`w-full flex justify-center`}>
                     {(loadMoreDocs * 20 + 20) >= chatLength && !isMessageLoading && (
-                        <div className="flex flex-col items-center justify-center">
+                        <div className="flex flex-col items-center justify-center p-6">
                             <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
-                            <p className="text-sm md:text-md max-w-[40ch] text-center">Welcome to the conversation! Write something down to start the convo.</p>
+                            <p className="text-sm md:text-md text-center">Welcome to the conversation! Write something down to start the convo.</p>
                         </div>
                     )}
                 </div>
 
             </div>
-            <div className="w-full h-[5%] border-t-[1px] px-6 py-2 flex space-x-4">
+            <div className="bg-white w-full border-t-[1px] px-6 py-3 flex space-x-4">
                 <form className="flex space-x-6 items-center w-full">
                     <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleAttachClick}>
                         <Paperclip width={20} height={20} color="#991b1b" />
@@ -329,7 +359,7 @@ export const ChatBox = ({ activeChatData, setMemberListWindow, deleteChat, curre
                     </motion.a>
                     <input id="fileInput1" type="file" onChange={handleFileUpload} className="hidden" />
                     <input id="fileInput2" type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
-                    <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm p-2 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="Type message here" />
+                    <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm py-2 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="Type message here" />
                     <motion.button whileHover={{ scale: 1.05 }} type="submit" onClick={buttonSendClick}><SendHorizontal width={20} height={20} color="#991b1b" /></motion.button>
                 </form>
             </div>
