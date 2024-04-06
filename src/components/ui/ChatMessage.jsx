@@ -26,14 +26,14 @@ export const ChatMessage = ({ side, isDifference, isMessageLoading, text, m, ind
             {/* If the message is the first message in the chat, show the timestamp of the first message */}
             {text.length - 1 === index && !isMessageLoading && (
                 <div className={`w-full flex justify-center`}>
-                    <p className={`text-xs`}>{returnTimestampFirstMessage(m)}</p>
+                    <p className={`text-xs`}>{returnTimestampFirstMessage(m) || ""}</p>
                 </div>
             )}
 
             {/* Otherwise, show the time difference between the current message and the next message */}
             {isDifference(m, text[index === text.length - 1 ? index : index + 1], text.length, index) && (
-                <div className={`w-full flex justify-center`}>
-                    <p className={`text-xs`}>{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1])}</p>
+                <div className={`w-full flex justify-center my-3`}>
+                    <p className={`text-xs`}>{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1]) || ""}</p>
                 </div>
             )}
 
@@ -47,7 +47,7 @@ export const ChatMessage = ({ side, isDifference, isMessageLoading, text, m, ind
                     <p className={`${side === 1 ? "text-white" : "text-black"} text-sm`}>{m.message}</p>
                 )}
                 {isMessageSending && index === 0 &&
-                    <div className={`absolute bottom-[-22px] right-0`}><BeatLoader size={8} color="#c91e1e" /></div>
+                    <div className={`absolute -bottom-6 right-0`}><BeatLoader size={8} color="#c91e1e" /></div>
                 }
             </div>
         </div>

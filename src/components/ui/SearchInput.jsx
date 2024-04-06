@@ -4,7 +4,7 @@ export const SearchInput = ({ searchInput, setSearchInput, handleSearchSubmit })
 
     return (
         <div className="group">
-            <div className="py-2 flex space-x-2 items-center px-5 rounded-full bg-black/5 group-hover:bg-[#e6e6e6] font-light outline-0">
+            <div className="py-2 flex space-x-2 items-center px-5 rounded-xl bg-black/5 group-hover:bg-[#e6e6e6] font-light outline-0">
                 <Search width={20} height={20} />
                 <input
                     value={searchInput}

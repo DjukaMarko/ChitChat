@@ -4,7 +4,7 @@ import { ChatHistory } from "./ChatHistory";
 import { FriendBubble } from "./FriendBubble";
 import { isEqual } from "lodash";
 import { AnimatePresence, motion } from "framer-motion";
-import { Trash2, BookUser, LogOut, MessageSquareHeart } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
     SwipeableList,
     SwipeableListItem,
@@ -12,10 +12,11 @@ import {
     TrailingActions,
 } from 'react-swipeable-list';
 import 'react-swipeable-list/dist/styles.css';
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { PageContext } from "../misc/PageContext";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { Switch } from "./switch";
+import { useDraggable } from "react-use-draggable-scroll";
 
 
 export const ChatSidebar = ({
@@ -25,9 +26,13 @@ export const ChatSidebar = ({
     setChatOpen,
     setCurrentGroupId,
     setSelectedChat,
-    handleChat }) => {
+    handleChat,
+    mode,
+    setMode }) => {
     const { myUserData, myGroups, deleteChat, selectedChat, currentGroupId } = useContext(PageContext);
-    const [mode, setMode] = useState("light");
+    
+    const ref = useRef(); // We will use React useRef hook to reference the wrapping div:
+    const { events } = useDraggable(ref);
 
     const handleBubble = (r) => {
         setActiveChatData([r]);
@@ -58,7 +63,7 @@ export const ChatSidebar = ({
 
     return (
         <div className="relative w-full h-screen-safe flex flex-col">
-            <div className="relative top-0 flex flex-col space-y-6 p-4">
+            <div className="relative top-0 left-0 right-0 flex flex-col space-y-6 p-4">
                 <div className="w-full flex justify-between items-center">
                     <div className="flex flex-col space-y-1">
                         <p className="text-lg md:text-2xl font-[500]">Chats</p>
@@ -79,7 +84,7 @@ export const ChatSidebar = ({
                     </div>
                 </div>
                 <SearchBar usersRef={usersRef} />
-                <div className="flex w-full space-x-1 overflow-x-auto">
+                <div {...events } ref={ref} className="flex w-full space-x-1 overflow-x-scroll scrollbar-hide">
                     <FriendBubble r={myUserData} />
                     {myUserData?.friends?.map((r) => (
                         <FriendBubble key={r.userId} removeFriend={() => removeFriend(r.display_name)} r={r} handleClick={() => handleBubble(r)} />
@@ -87,7 +92,7 @@ export const ChatSidebar = ({
                 </div>
             </div>
             <div className="w-full h-[1px] bg-black/5 mb-3"></div>
-            <div className="h-full flex flex-col items-center overflow-y-scroll px-4">
+            <div className="h-full flex flex-col items-center overflow-y-scroll scrollbar-hide px-4">
                 {myGroups.length === 0 ?
 
                     <div className="flex mt-16 flex-col items-center justify-center space-y-6">
@@ -122,11 +127,6 @@ export const ChatSidebar = ({
                         </SwipeableList>;
                     </AnimatePresence>
                 }
-            </div>
-            <div className="md:hidden w-full border-t-[1px] border-black/5 flex">
-                <div className="flex justify-center items-center h-full grow bg-black/5 hover:bg-black/10 p-3 border-t-[2px] border-red-800"><MessageSquareHeart color="#991b1b" /></div>
-                <div className="flex justify-center items-center h-full grow hover:bg-black/10 p-3"><BookUser /></div>
-                <div className="flex justify-center items-center h-full grow hover:bg-black/10 p-3"><LogOut /></div>
             </div>
         </div>
     )

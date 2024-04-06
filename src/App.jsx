@@ -1,12 +1,11 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import { Auth } from "./components/ui/Auth";
 import Cookies from "universal-cookie";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db, real_db } from "./config/firebase";
 import moment from 'moment';
 import emptycart from "../public/landing404illustration.svg"
-import emptylist from "../public/404illustration.jpg"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
   addDoc,
@@ -38,7 +37,9 @@ import useWindowDimensions from "./components/hooks/useWindowDimensions";
 import Modal from "./components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { PageContext } from "./components/misc/PageContext";
-import { CirclePlus, GripVertical } from "lucide-react";
+import { BookUser, CirclePlus, GripVertical, LogOut, MessageSquareHeart } from "lucide-react";
+import { BeatLoader } from "react-spinners";
+import { AnimatePresence, motion } from "framer-motion";
 
 
 const cookies = new Cookies();
@@ -54,6 +55,19 @@ function App() {
   const [selectedChat, setSelectedChat] = useState({});
   const [myUserData, setMyUserData] = useState({});
   const [myGroups, setMyGroups] = useState([]);
+  const [mode, setMode] = useState("light");
+  const refresh = () => window.location.reload(true);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut(auth);
+      cookies.set("auth-token", "");
+      refresh();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const usersRef = collection(db, "users");
   if (!isAuth) {
@@ -353,7 +367,8 @@ function App() {
   }
 
   const hideChat = () => {
-    setChatOpen(false)
+    setChatOpen(false);
+    setActiveChatData({});
     setCurrentGroupId("");
     setSelectedChat({});
   }
@@ -401,41 +416,49 @@ function App() {
           setMemberListWindow,
           selectedChat,
           deleteChat,
-          formatTimeAgo
+          formatTimeAgo,
+          refresh,
+          isSigningOut,
+          handleSignOut,
         }}
       >
-
-        <Modal isShown={memberListWindow} setShown={setMemberListWindow}>
-          <ModalList />
-        </Modal>
         <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
-        <PanelGroup direction="horizontal" className="w-full h-screen-safe flex">
+        <PanelGroup direction="horizontal" className="w-full h-full flex">
           <Panel
             defaultSize={width > 900 ? 40 : 50}
             minSize={width > 900 ? 40 : 50}
-            className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between`}>
-
-            <div className="flex flex-col w-full h-full">
-              {isChatSidebarLoading
-                ?
-                <SkeletonLoader />
-                :
-                selectedSidebar === 1 ?
-                  <ChatSidebar
-                    usersRef={usersRef}
-                    setActiveChatData={(v) => setActiveChatData(v)}
-                    handleChat={(v) => handleChat(v)}
-                    setChatOpen={(v) => setChatOpen(v)}
-                    removeFriend={(r) => handleRemoveFriend(r)}
-                    setCurrentGroupId={(v) => setCurrentGroupId(v)}
-                    setSelectedChat={(v) => setSelectedChat(v)}
-                  />
+            className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between h-screen-safe`}>
+            <div className="relative flex flex-col w-full h-full overflow-y-scroll scrollbar-hide">
+              <div className="w-full h-full">
+                {isChatSidebarLoading
+                  ?
+                  <SkeletonLoader />
                   :
-                  <RequestsSidebar
-                    acceptRequest={(r) => handleAccept(r)}
-                    removeRequest={(r) => handleReject(r)} />
+                  selectedSidebar === 1 ?
+                    <ChatSidebar
+                      usersRef={usersRef}
+                      setActiveChatData={(v) => setActiveChatData(v)}
+                      handleChat={(v) => handleChat(v)}
+                      setChatOpen={(v) => setChatOpen(v)}
+                      removeFriend={(r) => handleRemoveFriend(r)}
+                      setCurrentGroupId={(v) => setCurrentGroupId(v)}
+                      setSelectedChat={(v) => setSelectedChat(v)}
+                      mode={mode}
+                      setMode={setMode}
+                    />
+                    :
+                    <RequestsSidebar
+                      acceptRequest={(r) => handleAccept(r)}
+                      removeRequest={(r) => handleReject(r)} />
 
-              }
+
+                }
+              </div>
+              <div className="w-full bg-white md:hidden border-t-[1px] border-black/5 flex z-[5]">
+                <div onClick={() => setSelectedSidebar(1)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 1 && !isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}><MessageSquareHeart color={selectedSidebar === 1 ? "#991b1b" : "#000"} /></div>
+                <div onClick={() => setSelectedSidebar(2)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 2 && !isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}><BookUser color={selectedSidebar === 2 ? "#991b1b" : "#000"} /></div>
+                <div onClick={handleSignOut} className={`flex justify-center items-center h-full grow ${isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}>{isSigningOut ? <BeatLoader size={4} color="#991b1b" /> : <LogOut />} </div>
+              </div>
             </div>
           </Panel>
           <PanelResizeHandle className="items-center hidden md:flex bg-[#f7f7f7] relative">
@@ -443,73 +466,22 @@ function App() {
               <GripVertical className="w-4 h-4" />
             </div>
           </PanelResizeHandle>
-          <Panel minSize={35} className={(isChatOpened ? "w-full max-h-screen" : "hidden md:flex justify-center items-center w-full max-h-screen")}>
+          <Panel minSize={35} className={(isChatOpened ? "w-full h-screen-safe" : "hidden md:flex justify-center items-center w-full h-screen-safe")}>
+            <ChatBox
+              setMemberListWindow={(v) => setMemberListWindow(v)}
+              hideChat={hideChat}
+              isChatOpened={isChatOpened} />
+
             {
-              isChatOpened || currentGroupId !== "" ? (
-                <ChatBox
-                  setMemberListWindow={(v) => setMemberListWindow(v)}
-                  hideChat={hideChat} />
-              ) :
+              !isChatOpened && (
                 <EmptyChatWindow />
+              )
             }
           </Panel>
         </PanelGroup>
       </PageContext.Provider>
     </div>
   );
-}
-
-
-const ModalList = () => {
-  const { myUserData, setMemberListWindow, activeChatData } = useContext(PageContext);
-
-  const handleAddMember = async (item, index) => {
-    if (!item || item.userId === undefined) return;
-
-    await updateDoc(doc(db, "groups", currentGroupId), {
-      members: arrayUnion(item.userId),
-    })
-    await updateDoc(doc(db, "users", item.userId), {
-      groups: arrayUnion(currentGroupId),
-    })
-
-  }
-
-  let checkIfExists = (item, index) => {
-    if (!item || item.display_name === undefined) return;
-    for (let i = 0; i < activeChatData.length; i++) {
-      if (activeChatData[i].display_name === item.display_name) return true;
-    }
-    return false;
-  }
-
-  return (
-    <>
-      { myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).length === 0 ? (
-        <div className="w-full p-6 h-full flex flex-col justify-center items-center space-y-6">
-          <img src={emptylist} className="w-52" />
-          <div className="flex flex-col justify-center items-center text-sm">
-            <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
-            <p className="font-[400] tracking-wide">Let's add some friends first!</p>
-          </div>
-          <Button className="bg-red-800 hover:bg-red-700" onClick={() => setMemberListWindow(false)}>Close</Button>
-        </div>
-      ) : (
-        myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).map((item, index) => (
-          <div key={item?.userId} className="w-full sm:w-[20rem] flex justify-between items-center hover:bg-[#f0f0f0] cursor-pointer p-2 rounded-xl">
-            <div className="flex space-x-4 items-center">
-              <img src={item?.photoUrl} referrerPolicy="no-referrer" className="w-[50px] h-[50px] rounded-full" />
-              <p className="text-sm md:text-md">{item?.display_name}</p>
-            </div>
-            <button onClick={(event) => {
-              handleAddMember(item, index)
-              event.currentTarget.disabled = true;
-            }} className="disabled:cursor-not-allowed disabled:opacity-50"><CirclePlus /></button>
-          </div>
-        ))
-      )}
-    </>
-  )
 }
 
 const EmptyChatWindow = () => {
