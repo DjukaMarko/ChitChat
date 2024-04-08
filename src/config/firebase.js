@@ -12,7 +12,7 @@ import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCOSOdQzBuAe6SaI1JjM0unp8V9K51R-RE",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "chat-b862d.firebaseapp.com",
   projectId: "chat-b862d",
   storageBucket: "chat-b862d.appspot.com",
