@@ -1,6 +1,6 @@
 import { useInView } from "react-intersection-observer";
-import google from "../../../public/google.png"
-import graphics1 from "../../../public/graphics1.png";
+import google from "@/../public/google.png"
+import graphics1 from "@/../public/graphics1.png";
 import { motion, useAnimation } from "framer-motion";  
 import { useEffect } from "react";
 

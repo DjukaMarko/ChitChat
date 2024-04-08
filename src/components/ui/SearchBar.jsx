@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { auth, db } from "../../config/firebase";
+import { auth, db } from "@/config/firebase";
 import { and, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { SearchInput } from "./SearchInput";
 

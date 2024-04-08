@@ -4,7 +4,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 export const SkeletonLoader = () => {
     return (
         <SkeletonTheme color="#ededed" highlightColor="#d6d6d6">
-              <section className='p-6 w-full h-screen-safe overflow-hidden'>
+              <section className='p-6 w-full h-[calc(100dvh)] overflow-hidden'>
 
                 <div className="flex justify-between">
                   <Skeleton className="hover:border-[2px] border-[#bababa]" circle={true} height={30} width={30} />

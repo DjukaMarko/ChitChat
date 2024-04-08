@@ -1,14 +1,15 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { auth, db, storage } from "../../config/firebase"
+import { auth, db, storage } from "@/config/firebase"
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
-import newchat from "../../../public/newchat.svg"
-import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
+import newchat from "@/../public/newchat.svg"
+import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
 import moment from "moment";
 import { ChatMessage } from "./ChatMessage";
-import { AnimatePresence, motion } from "framer-motion";
-import emptylist from "../../../public/404illustration.jpg"
+import { motion } from "framer-motion";
+import emptylist from "@/../public/404illustration.jpg"
+import surprisedImage from "@/../public/surprised.svg"
 
 import {
     DropdownMenu,
@@ -17,16 +18,17 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronLeft, CirclePlus, Ellipsis, Images, Paperclip, SendHorizontal, Trash2, UserRoundPlus } from "lucide-react";
+import { ChevronLeft, CirclePlus, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus, X } from "lucide-react";
 import { PageContext } from "../misc/PageContext";
 import Modal from "./Modal";
 import { Button } from "./button";
+import WarningModalPrint from "./WarningModalPrint";
 
 
-export const ChatBox = ({ setMemberListWindow, hideChat, isChatOpened }) => {
+export const ChatBox = ({ setMemberListWindow, hideChat }) => {
     const { activeChatData, deleteChat, currentGroupId, memberListWindow } = useContext(PageContext);
 
-    const [loadMoreDocs, setLoadMoreDocs] = useState(0);
+    const [loadMoreDocs, setLoadMoreDocs] = useState(1);
     const [text, setText] = useState([]);
     const [textValue, setTextValue] = useState("");
     const [fileUploadInput, setFileUploadInput] = useState("");
@@ -34,12 +36,16 @@ export const ChatBox = ({ setMemberListWindow, hideChat, isChatOpened }) => {
     const [currentMembers, setMembers] = useState([]);
     const [isMessageLoading, setMessageLoading] = useState(true);
     const [chatLength, setChatLength] = useState(0);
+    const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+    const [isDeletingChatLoading, setIsDeletingChatLoading] = useState(false);
 
     const scrollContainerRef = useRef();
-
     useEffect(() => {
+
         if (!currentGroupId) return;
 
+        setLoadMoreDocs(1);
+        setText([]);
         let setGroupData = async () => {
             let fetchData = await getDoc(doc(db, "groups", currentGroupId));
             setChatLength(fetchData.data().numMessages || 0);
@@ -116,8 +122,7 @@ export const ChatBox = ({ setMemberListWindow, hideChat, isChatOpened }) => {
         }
 
         if (currentGroupId === "") return;
-        let threshold = 20 + (loadMoreDocs * 20);
-
+        let threshold = (loadMoreDocs * 20);
         fetchMembers();
 
         const subcollectionRef = collection(doc(db, "groups", currentGroupId), "messages");
@@ -210,7 +215,7 @@ export const ChatBox = ({ setMemberListWindow, hideChat, isChatOpened }) => {
         if ((Math.abs(scrolledFromTop)) >= maxScrollHeight - 2) {
 
             setLoadMoreDocs(prevDocs => {
-                if ((prevDocs * 20 + 20) >= chatLength) return prevDocs;
+                if ((prevDocs * 20) >= chatLength) return prevDocs;
                 else return prevDocs + 1;
             });
         }
@@ -287,99 +292,109 @@ export const ChatBox = ({ setMemberListWindow, hideChat, isChatOpened }) => {
         return timestamp.format("MMM DD, h:mm A");
     }
 
-
+    const handleChatDelete = async () => {
+        setIsDeletingChatLoading(true);
+        if (activeChatData.length > 1) leaveGroup(); else deleteChat(currentGroupId);
+        setIsDeletingChatLoading(false);
+        setIsWarningModalOpen(false);
+    }
 
     return (
-        <AnimatePresence>
-            {isChatOpened && (
-                <motion.div
-                    key="chatbox"
-                    initial={{ x: 100 }}
-                    animate={{ x: 0 }}
-                    exit={{ x: 100 }}
-                    className="w-full h-screen-safe relative flex flex-col">
-                    <div className="relative w-full bg-white border-b-[1px] border-black/5 z-[2]">
-                        <Modal isShown={memberListWindow} setShown={setMemberListWindow}>
-                            <ModalList />
-                        </Modal>
-                        <div className="flex items-center justify-between p-4 sm:p-5">
-                            <div className="flex items-center">
-                                <ChevronLeft onClick={hideChat} className="md:hidden cursor-pointer mr-4" />
-                                <>
-                                    <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full mr-4" />
-                                    <div className="flex flex-col space-y-1">
-                                        <p className="text-sm">{activeChatData[0]?.display_name}</p>
-                                        <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
-                                    </div>
-                                </>
-                            </div>
-                            <div className="p-2">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Ellipsis className="cursor-pointer" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="m-2">
-                                        <DropdownMenuGroup>
-                                            <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center cursor-pointer p-2">
-                                                <UserRoundPlus className="w-5 h-5" />
-                                                <p>Add Member</p>
-                                            </DropdownMenuItem>
-                                            {activeChatData.length > 1 ?
-                                                <DropdownMenuItem onClick={() => leaveGroup()} className="flex space-x-4 items-center cursor-pointer p-2">
-                                                    <X color="#991b1b" className="w-5 h-5" />
-                                                    <p className="text-red-800 font-bold">Leave Group</p>
-                                                </DropdownMenuItem>
-                                                :
-                                                <DropdownMenuItem onClick={() => deleteChat(currentGroupId)} className="flex space-x-4 items-center cursor-pointer p-2">
-                                                    <Trash2 color="#991b1b" className="w-5 h-5" />
-                                                    <p className="text-red-800 font-bold">Delete Chat</p>
-                                                </DropdownMenuItem>
-                                            }
-                                        </DropdownMenuGroup>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        </div>
-                        {isMessageLoading &&
-                            <div className="absolute bg-white border-t-[1px] border-black/5 p-2 w-full flex justify-center items-center">
-                                <BeatLoader size={10} color="#c91e1e" />
-                            </div>
-                        }
-                    </div>
-                    <div
-                        ref={scrollContainerRef}
-                        onScroll={handleScroll}
-                        className="w-full h-screen-safe overflow-y-scroll flex flex-col-reverse py-6">
-                        {currentMembers.length > 0 && text.map((m, index) => {
-                            return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1, v2, v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} returnTimestampFirstMessage={(v1) => returnTimestampFirstMessage(v1)} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} isMessageLoading={isMessageLoading} />
-                        })}
-                        <div className={`w-full flex justify-center`}>
-                            {(loadMoreDocs * 20 + 20) >= chatLength && !isMessageLoading && (
-                                <div className="flex flex-col items-center justify-center p-6">
-                                    <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
-                                    <p className="text-sm md:text-md text-center">Welcome to the conversation! Write something down to start the convo.</p>
-                                </div>
-                            )}
-                        </div>
+        <>
+            <Modal isShown={isWarningModalOpen} setShown={setIsWarningModalOpen}>
+                <WarningModalPrint
+                    image={surprisedImage}
+                    executedFunc={handleChatDelete}
+                    isShown={isWarningModalOpen}
+                    setShown={setIsWarningModalOpen}
+                    isLoading={isDeletingChatLoading}
+                    confirmText="Yes, leave/delete it."
+                    cancelText="No, do not."
+                    text={`Are you sure you want to delete the chat/leave the group?`}
+                />
+            </Modal>
 
+            <motion.div
+                key="chatbox"
+                initial={{ x: 100 }}
+                animate={{ x: 0 }}
+                exit={{ x: -100 }}
+                transition={{ duration: 0.1 }}
+                className="w-full h-[calc(100dvh)] relative flex flex-col">
+                <div className="relative w-full bg-white border-b-[1px] border-black/5 z-[2]">
+                    <Modal isShown={memberListWindow} setShown={setMemberListWindow}>
+                        <ModalList />
+                    </Modal>
+                    <div className="flex items-center justify-between p-4 sm:p-5">
+                        <div className="flex items-center">
+                            <ChevronLeft onClick={hideChat} className="md:hidden cursor-pointer mr-4" />
+                            <>
+                                <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full mr-4" />
+                                <div className="flex flex-col space-y-1">
+                                    <p className="text-sm">{activeChatData[0]?.display_name}</p>
+                                    <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
+                                </div>
+                            </>
+                        </div>
+                        <div className="p-2">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Ellipsis className="cursor-pointer" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="m-2">
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center cursor-pointer p-2">
+                                            <UserRoundPlus className="w-5 h-5" />
+                                            <p>Add Member</p>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setIsWarningModalOpen(true)} className="flex space-x-4 items-center cursor-pointer p-2">
+                                            <Trash color="#991b1b" className="w-5 h-5" />
+                                            <p className="text-red-800 font-bold">{activeChatData.length > 1 ? "Leave Group" : "Delete Chat"}</p>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                     </div>
-                    <div className="bg-white w-full border-t-[1px] px-6 py-3 flex space-x-4">
-                        <form className="flex space-x-6 items-center w-full">
-                            <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleAttachClick}>
-                                <Paperclip width={20} height={20} color="#991b1b" />
-                            </motion.a>
-                            <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleImageUploadClick}>
-                                <Images width={20} height={20} color="#991b1b" />
-                            </motion.a>
-                            <input id="fileInput1" type="file" onChange={handleFileUpload} className="hidden" />
-                            <input id="fileInput2" type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
-                            <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm py-2 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="Type message here" />
-                            <motion.button whileHover={{ scale: 1.05 }} type="submit" onClick={buttonSendClick}><SendHorizontal width={20} height={20} color="#991b1b" /></motion.button>
-                        </form>
+                    {isMessageLoading &&
+                        <div className="absolute bg-white border-t-[1px] border-black/5 p-2 w-full flex justify-center items-center">
+                            <BeatLoader size={10} color="#c91e1e" />
+                        </div>
+                    }
+                </div>
+                <div
+                    ref={scrollContainerRef}
+                    onScroll={handleScroll}
+                    className="w-full h-[calc(100dvh)] overflow-y-scroll flex flex-col-reverse py-6">
+                    {currentMembers.length > 0 && text.map((m, index) => {
+                        return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1, v2, v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} returnTimestampFirstMessage={(v1) => returnTimestampFirstMessage(v1)} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} isMessageLoading={isMessageLoading} />
+                    })}
+                    <div className={`w-full flex justify-center`}>
+                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (
+                            <div className="flex flex-col items-center justify-center p-6">
+                                <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
+                                <p className="text-sm md:text-md text-center">Welcome to the conversation! Write something down to start the convo.</p>
+                            </div>
+                        )}
                     </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+
+                </div>
+                <div className="bg-white w-full border-t-[1px] px-6 py-3 flex space-x-4">
+                    <form className="flex space-x-6 items-center w-full">
+                        <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleAttachClick}>
+                            <Paperclip width={20} height={20} color="#991b1b" />
+                        </motion.a>
+                        <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleImageUploadClick}>
+                            <Images width={20} height={20} color="#991b1b" />
+                        </motion.a>
+                        <input id="fileInput1" type="file" onChange={handleFileUpload} className="hidden" />
+                        <input id="fileInput2" type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
+                        <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm py-2 bg-[#f0f0f0] rounded-full px-5 w-full" placeholder="Type message here" />
+                        <motion.button whileHover={{ scale: 1.05 }} type="submit" onClick={buttonSendClick}><SendHorizontal width={20} height={20} color="#991b1b" /></motion.button>
+                    </form>
+                </div>
+            </motion.div>
+        </>
     )
 }
 

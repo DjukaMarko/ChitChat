@@ -1,18 +1,18 @@
-import emptychat from "../../../public/undraw_empty_sidebar.svg"
+import emptychat from "@/../public/undraw_empty_sidebar.svg"
 import { SearchBar } from "./SearchBar";
 import { ChatHistory } from "./ChatHistory";
 import { FriendBubble } from "./FriendBubble";
-import { isEqual } from "lodash";
 import { AnimatePresence, motion } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { Smile, Trash2 } from "lucide-react";
 import {
+    LeadingActions,
     SwipeableList,
     SwipeableListItem,
     SwipeAction,
     TrailingActions,
 } from 'react-swipeable-list';
 import 'react-swipeable-list/dist/styles.css';
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef } from "react";
 import { PageContext } from "../misc/PageContext";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { Switch } from "./switch";
@@ -24,13 +24,13 @@ export const ChatSidebar = ({
     removeFriend,
     setActiveChatData,
     setChatOpen,
+    deleteChat,
     setCurrentGroupId,
-    setSelectedChat,
     handleChat,
     mode,
     setMode }) => {
-    const { myUserData, myGroups, deleteChat, selectedChat, currentGroupId } = useContext(PageContext);
-    
+    const { myUserData, myGroups, currentGroupId } = useContext(PageContext);
+
     const ref = useRef(); // We will use React useRef hook to reference the wrapping div:
     const { events } = useDraggable(ref);
 
@@ -41,19 +41,28 @@ export const ChatSidebar = ({
 
     const handleChatByGroupId = async (item) => {
         setCurrentGroupId(item.id);
-        setSelectedChat(item);
         setActiveChatData(item.members);
         setChatOpen(true);
     }
+
+    const leadingActions = () => (
+        <LeadingActions>
+             <SwipeAction
+                    className="bg-green-500 rounded-xl p-3 mb-1 ml-1 text-white font-bold"
+                    onClick={() => {}}
+                >
+                    <Smile color="#fff" className="w-full h-full p-3" />
+                </SwipeAction>
+        </LeadingActions>
+    );
+
     const trailingActions = (id) => {
         return (
             <TrailingActions>
                 <SwipeAction
                     destructive={true}
                     className="bg-red-700 rounded-xl p-3 mb-1 ml-1 text-white font-bold"
-                    onClick={async () => {
-                        await deleteChat(id);
-                    }}
+                    onClick={async () => await deleteChat(id)}
                 >
                     <Trash2 color="#fff" className="w-full h-full p-3" />
                 </SwipeAction>
@@ -62,7 +71,7 @@ export const ChatSidebar = ({
     };
 
     return (
-        <div className="relative w-full h-screen-safe flex flex-col">
+        <div className="relative w-full h-[calc(100dvh-4rem)] md:h-[calc(100dvh)] flex flex-col">
             <div className="relative top-0 left-0 right-0 flex flex-col space-y-6 p-4">
                 <div className="w-full flex justify-between items-center">
                     <div className="flex flex-col space-y-1">
@@ -84,7 +93,7 @@ export const ChatSidebar = ({
                     </div>
                 </div>
                 <SearchBar usersRef={usersRef} />
-                <div {...events } ref={ref} className="flex w-full space-x-1 overflow-x-scroll scrollbar-hide">
+                <div {...events} ref={ref} className="flex w-full space-x-1 overflow-x-scroll scrollbar-hide">
                     <FriendBubble r={myUserData} />
                     {myUserData?.friends?.map((r) => (
                         <FriendBubble key={r.userId} removeFriend={() => removeFriend(r.display_name)} r={r} handleClick={() => handleBubble(r)} />
@@ -92,7 +101,7 @@ export const ChatSidebar = ({
                 </div>
             </div>
             <div className="w-full h-[1px] bg-black/5 mb-3"></div>
-            <div className="h-full flex flex-col items-center overflow-y-scroll scrollbar-hide px-4">
+            <div className="w-full flex flex-col items-center overflow-y-scroll scrollbar-hide px-4">
                 {myGroups.length === 0 ?
 
                     <div className="flex mt-16 flex-col items-center justify-center space-y-6">
@@ -102,10 +111,11 @@ export const ChatSidebar = ({
                     :
                     <AnimatePresence>
 
-                        <SwipeableList>
+                        <SwipeableList fullSwipe={false}>
                             {myGroups.map((item, index) => (
                                 <SwipeableListItem
                                     key={item.id}
+                                    leadingActions={leadingActions()}
                                     trailingActions={trailingActions(item.id)}
                                 >
                                     <motion.div
@@ -116,7 +126,7 @@ export const ChatSidebar = ({
                                         className="w-full rounded-lg"
                                     >
                                         <ChatHistory
-                                            isSelected={isEqual(selectedChat.id, item.id) || (myGroups.length === 1 && currentGroupId === item.id)}
+                                            isSelected={currentGroupId === item.id}
                                             item={item}
                                             index={index}
                                             handleClick={() => handleChatByGroupId(item)}

@@ -9,7 +9,6 @@ import emptycart from "../public/landing404illustration.svg"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
   addDoc,
-  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -34,10 +33,8 @@ import { ChatSidebar } from "./components/ui/ChatSidebar";
 import { RequestsSidebar } from "./components/ui/RequestsSidebar";
 import { Sidebar } from "./components/ui/Sidebar";
 import useWindowDimensions from "./components/hooks/useWindowDimensions";
-import Modal from "./components/ui/Modal";
-import { Button } from "@/components/ui/button";
 import { PageContext } from "./components/misc/PageContext";
-import { BookUser, CirclePlus, GripVertical, LogOut, MessageSquareHeart } from "lucide-react";
+import { BookUser, GripVertical, LogOut, MessageSquareHeart } from "lucide-react";
 import { BeatLoader } from "react-spinners";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -52,7 +49,6 @@ function App() {
   const [isChatSidebarLoading, setChatSidebarLoading] = useState(true);
   const [activeChatData, setActiveChatData] = useState({});
   const [memberListWindow, setMemberListWindow] = useState(false);
-  const [selectedChat, setSelectedChat] = useState({});
   const [myUserData, setMyUserData] = useState({});
   const [myGroups, setMyGroups] = useState([]);
   const [mode, setMode] = useState("light");
@@ -85,7 +81,7 @@ function App() {
 
       let snapshots_to_unmount = [];
 
-      await Promise.all(myUserData.groups.map(async group => {
+      await Promise.all(myUserData.groups.filter(group => group.length > 0).map(async group => {
         const unsubscribe = onSnapshot(doc(db, "groups", group), async snapshot => {
           const membersData = await Promise.all(snapshot.data().members.filter(member => member !== myUserData.userId).map(async member => {
             let memberData = await getDoc(doc(db, "users", member));
@@ -370,7 +366,6 @@ function App() {
     setChatOpen(false);
     setActiveChatData({});
     setCurrentGroupId("");
-    setSelectedChat({});
   }
 
   const deleteChat = async (id) => {
@@ -404,7 +399,7 @@ function App() {
 
 
   return (
-    <div className="w-full h-screen-safe relative flex">
+    <div className="w-full h-[calc(100dvh)] relative flex">
       <PageContext.Provider
         value={{
           width,
@@ -414,7 +409,6 @@ function App() {
           activeChatData,
           memberListWindow,
           setMemberListWindow,
-          selectedChat,
           deleteChat,
           formatTimeAgo,
           refresh,
@@ -427,7 +421,7 @@ function App() {
           <Panel
             defaultSize={width > 900 ? 40 : 50}
             minSize={width > 900 ? 40 : 50}
-            className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between h-screen-safe`}>
+            className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between h-full`}>
             <div className="relative flex flex-col w-full h-full overflow-y-scroll scrollbar-hide">
               <div className="w-full h-full">
                 {isChatSidebarLoading
@@ -439,10 +433,10 @@ function App() {
                       usersRef={usersRef}
                       setActiveChatData={(v) => setActiveChatData(v)}
                       handleChat={(v) => handleChat(v)}
+                      deleteChat={(v) => deleteChat(v)}
                       setChatOpen={(v) => setChatOpen(v)}
                       removeFriend={(r) => handleRemoveFriend(r)}
                       setCurrentGroupId={(v) => setCurrentGroupId(v)}
-                      setSelectedChat={(v) => setSelectedChat(v)}
                       mode={mode}
                       setMode={setMode}
                     />
@@ -454,7 +448,7 @@ function App() {
 
                 }
               </div>
-              <div className="w-full bg-white md:hidden border-t-[1px] border-black/5 flex z-[5]">
+              <div className="w-full h-[4rem] bg-white md:hidden border-t-[1px] border-black/5 flex z-[5]">
                 <div onClick={() => setSelectedSidebar(1)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 1 && !isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}><MessageSquareHeart color={selectedSidebar === 1 ? "#991b1b" : "#000"} /></div>
                 <div onClick={() => setSelectedSidebar(2)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 2 && !isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}><BookUser color={selectedSidebar === 2 ? "#991b1b" : "#000"} /></div>
                 <div onClick={handleSignOut} className={`flex justify-center items-center h-full grow ${isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}>{isSigningOut ? <BeatLoader size={4} color="#991b1b" /> : <LogOut />} </div>
@@ -466,17 +460,23 @@ function App() {
               <GripVertical className="w-4 h-4" />
             </div>
           </PanelResizeHandle>
-          <Panel minSize={35} className={(isChatOpened ? "w-full h-screen-safe" : "hidden md:flex justify-center items-center w-full h-screen-safe")}>
-            <ChatBox
-              setMemberListWindow={(v) => setMemberListWindow(v)}
-              hideChat={hideChat}
-              isChatOpened={isChatOpened} />
+          <Panel minSize={35} className={`w-full h-full ${(!isChatOpened && "hidden md:flex justify-center items-center")}`}>
+            
+            <AnimatePresence>
+              {isChatOpened && (
+                <ChatBox
+                setMemberListWindow={(v) => setMemberListWindow(v)}
+                hideChat={hideChat}
+                />
+              )}
+            </AnimatePresence>
 
-            {
-              !isChatOpened && (
+            <AnimatePresence>
+              {!isChatOpened && (
                 <EmptyChatWindow />
-              )
-            }
+              )}
+            </AnimatePresence>
+
           </Panel>
         </PanelGroup>
       </PageContext.Provider>
@@ -486,13 +486,18 @@ function App() {
 
 const EmptyChatWindow = () => {
   return (
-    <div className="flex flex-col justify-center items-center space-y-6">
+    <motion.div
+      key="emptychatwindow"
+      initial={{ x: 100 }}
+      animate={{ x: 0 }}
+      exit={{ x: -100 }}
+      transition={{ duration: 0.1 }} className="flex flex-col justify-center items-center space-y-6">
       <img src={emptycart} className="w-32 sm:w-64" />
       <div className="flex flex-col justify-center items-center text-sm">
         <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
         <p className="font-[400] tracking-wide">Start a conversation and break the silence!</p>
       </div>
-    </div>
+    </motion.div>
   )
 }
 

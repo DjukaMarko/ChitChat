@@ -1,4 +1,4 @@
-import {motion} from "framer-motion";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 export const Navbar = ({ setMobileNavClicked }) => {

@@ -1,8 +1,8 @@
 import Cookies from "universal-cookie";
-import { auth, db, googleProvider } from "../../config/firebase";
+import { auth, db, googleProvider } from "@/config/firebase";
 import { signInWithPopup } from "firebase/auth";
-import arrows from "../../../public/arrows.png";
-import blankpfp from "../../../public/blankpfp.jpg"
+import arrows from "@/../public/arrows.png";
+import blankpfp from "@/../public/blankpfp.png"
 import { Navbar } from "./Navbar";
 import { Hero } from "./Hero";
 import { DescriptionChitChat } from "./DescriptionChitChat";
@@ -12,7 +12,7 @@ import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { motion } from "framer-motion";
 import { collection, getDocs, doc, query, where, setDoc } from "firebase/firestore";
-import "../../Auth.css"
+import "@/Auth.css"
 
 const cookies = new Cookies();
 

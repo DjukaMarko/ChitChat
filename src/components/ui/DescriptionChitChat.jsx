@@ -1,7 +1,7 @@
 import { motion, useAnimation } from "framer-motion";
-import plant from "../../../public/plant.png";
-import graphics2 from "../../../public/graphics2.png";
-import graphics3 from "../../../public/graphics4.png";
+import plant from "@/../public/plant.png";
+import graphics2 from "@/../public/graphics2.png";
+import graphics3 from "@/../public/graphics4.png";
 import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
 

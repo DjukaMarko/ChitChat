@@ -1,4 +1,4 @@
-import { auth } from "../../config/firebase";
+import { auth } from "@/config/firebase";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -7,9 +7,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Modal from "./Modal";
-import { Button } from "./button";
 import { useState } from "react";
-import { BeatLoader } from "react-spinners";
+import WarningModalPrint from "./WarningModalPrint";
+import surprisedImage from "@/../public/surprised.svg";
 
 export const FriendBubble = ({ removeFriend, r, handleClick }) => {
     const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
@@ -26,13 +26,16 @@ export const FriendBubble = ({ removeFriend, r, handleClick }) => {
     return (
         <>
             <Modal isShown={isWarningModalOpen} setShown={setIsWarningModalOpen}>
-                <div className="relative w-full h-full flex flex-col items-center justify-center space-y-6 px-2 py-8">
-                    <p className="text-sm text-center sm:text-base">Are you sure you want to remove {r?.display_name}?</p>
-                    <div className="w-full flex flex-col space-y-1 sm:space-y-0 sm:space-x-2 sm:flex-row ">
-                        <Button onClick={handleRemovingFriend} className="bg-red-800 text-white grow text-xs sm:text-sm">{isRemovingFriendLoading ? <BeatLoader size={8} color="#fff" /> : "Yes, remove them." }</Button>
-                        <Button className="grow text-xs sm:text-sm" variant="secondary" onClick={() => setIsWarningModalOpen(false)}>No, do not.</Button>
-                    </div>
-                </div>
+                <WarningModalPrint
+                    image={surprisedImage} 
+                    executedFunc={handleRemovingFriend} 
+                    isShown={isWarningModalOpen}
+                    setShown={setIsWarningModalOpen}
+                    isLoading={isRemovingFriendLoading}
+                    confirmText="Yes, remove them."
+                    cancelText="No, do not."
+                    text={`Are you sure you want to remove ${r?.display_name}?`} 
+                />
             </Modal>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
