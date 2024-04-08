@@ -48,7 +48,7 @@ export const ChatSidebar = ({
     const leadingActions = () => (
         <LeadingActions>
              <SwipeAction
-                    className="bg-yellow-500 rounded-xl p-3 mb-1 ml-1 text-white font-bold"
+                    className="bg-yellow-700 rounded-xl p-3 mb-1 ml-1 text-white font-bold"
                     onClick={() => {}}
                 >
                     <Smile color="#fff" className="w-full h-full p-3" />

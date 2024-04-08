@@ -418,7 +418,7 @@ function App() {
       >
         <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
         <PanelGroup direction="horizontal" className="w-full h-full flex">
-          <Panel
+          <Panel 
             defaultSize={width > 900 ? 40 : 50}
             minSize={width > 900 ? 40 : 50}
             className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between h-full`}>
