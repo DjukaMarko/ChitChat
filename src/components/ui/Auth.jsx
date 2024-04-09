@@ -3,6 +3,7 @@ import { auth, db, googleProvider } from "@/config/firebase";
 import { signInWithPopup } from "firebase/auth";
 import arrows from "@/../public/arrows.png";
 import blankpfp from "@/../public/blankpfp.png"
+import wave from "@/../public/wave.svg";
 import { Navbar } from "./Navbar";
 import { Hero } from "./Hero";
 import { DescriptionChitChat } from "./DescriptionChitChat";
@@ -49,7 +50,7 @@ export const Auth = () => {
 
   return (
     <>
-      <div className="max-w-[2500px] mx-auto relative background">
+      <div className="max-w-[2500px] mx-auto relative">
         <AnimatePresence>
           {isMobileNavClicked && (
             <motion.div
@@ -66,14 +67,17 @@ export const Auth = () => {
         <Navbar setMobileNavClicked={setMobileNavClicked} />
         <Hero handleSignIn={handleSignIn} />
 
-        <div className="w-full my-16">
-          <div className="w-16 h-16 mx-auto flex justify-center items-center rounded-full bg-white drop-shadow-xl shadow-inner">
-            <img src={arrows} className="w-8" />
+        <div className="bg-[#f8f8f8]">
+          <div className="relative w-full py-16">
+            <div className="w-16 h-16 mx-auto flex justify-center items-center rounded-full bg-white drop-shadow-xl shadow-inner">
+              <img src={arrows} className="w-8" />
+            </div>
           </div>
+
+          <DescriptionChitChat handleSignIn={handleSignIn} />
+          <Footer />
         </div>
 
-        <DescriptionChitChat handleSignIn={handleSignIn} />
-        <Footer />
       </div>
     </>
   );

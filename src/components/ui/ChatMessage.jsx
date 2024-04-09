@@ -38,7 +38,7 @@ export const ChatMessage = ({ side, isDifference, isMessageLoading, text, m, ind
             )}
 
             {side === 2 && (text[index + 1]?.sentBy !== otherMember?.userId && <img className="w-9 rounded-full mt-4 ml-2" src={otherMember?.photoUrl} />)}
-            <div className={`${(side === 1 ? (isMessageSending && index === 0 ? "bg-red-400" : "bg-red-800 hover:bg-red-700") : "bg-black/10 hover:bg-black/20")} ${side === 1 ? "mx-6" : "mx-10"}  py-2 px-4 rounded-xl relative max-w-[70%] break-words cursor-pointer`}>
+            <div className={`${(side === 1 ? (isMessageSending && index === 0 ? "bg-red-400" : "bg-red-800 hover:bg-red-700") : "bg-black/5 hover:bg-black/10")} ${side === 1 ? "mx-6" : "mx-10"}  py-2 px-4 rounded-xl relative max-w-[70%] break-words cursor-pointer`}>
                 {isValidUrl(m.message) ? (
                     <a href={m.message.startsWith("http") ? m.message : `https://${m.message}`} className={`${side === 1 ? "text-white" : "text-black"} underline text-xs md:text-sm`} target="_blank" rel="noopener noreferrer">
                         {m.message}

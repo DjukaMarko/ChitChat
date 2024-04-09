@@ -76,7 +76,7 @@ export const ChatSidebar = ({
                 <div className="w-full flex justify-between items-center">
                     <div className="flex flex-col space-y-1">
                         <p className="text-lg md:text-2xl font-[500]">Chats</p>
-                        <p className="text-sm text-gray-400">People, Groups, Messages</p>
+                        <p className="text-sm text-gray-500">People, Groups, Messages</p>
                     </div>
                     <div className="flex items-center space-x-3">
                         <Switch
