@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import { Auth } from "./components/ui/Auth";
 import Cookies from "universal-cookie";
@@ -37,6 +37,7 @@ import { PageContext } from "./components/misc/PageContext";
 import { BookUser, GripVertical, LogOut, MessageSquareHeart } from "lucide-react";
 import { BeatLoader } from "react-spinners";
 import { AnimatePresence, motion } from "framer-motion";
+import { ThemeProvider, theme } from "./components/misc/ThemeProvider";
 
 
 const cookies = new Cookies();
@@ -52,19 +53,6 @@ function App() {
   const [myUserData, setMyUserData] = useState({});
   const [myGroups, setMyGroups] = useState([]);
   const [mode, setMode] = useState("light");
-
-  // Define your theme object
-  const theme = {
-    colors: {
-      primary: 'blue',
-      secondary: 'green',
-    },
-    // Add other theme properties as needed
-  };
-
-  // Create a context for your theme
-  const ThemeContext = createContext(theme);
-
 
   const refresh = () => window.location.reload(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -405,94 +393,92 @@ function App() {
   }
 
 
+  if(!isAuth) return <ThemeProvider.Provider value={theme}><Auth /></ThemeProvider.Provider>;
   return (
-    <ThemeContext.Provider value={theme}>
-      {!isAuth ?
-        (<Auth />) :
-        <div className="w-full h-[calc(100dvh)] relative flex">
-          <PageContext.Provider
-            value={{
-              width,
-              myUserData,
-              myGroups,
-              currentGroupId,
-              activeChatData,
-              memberListWindow,
-              setMemberListWindow,
-              deleteChat,
-              formatTimeAgo,
-              refresh,
-              isSigningOut,
-              handleSignOut,
-            }}
-          >
-            <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
-            <PanelGroup direction="horizontal" className="w-full h-full flex">
-              <Panel
-                defaultSize={width > 900 ? 40 : 50}
-                minSize={width > 900 ? 40 : 50}
-                className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between h-full`}>
-                <div className="relative flex flex-col w-full h-full overflow-y-scroll scrollbar-hide">
-                  <div className="w-full h-full">
-                    {isChatSidebarLoading
-                      ?
-                      <SkeletonLoader />
+    <ThemeProvider.Provider value={theme}>
+      <div className="w-full h-[calc(100dvh)] relative flex">
+        <PageContext.Provider
+          value={{
+            width,
+            myUserData,
+            myGroups,
+            currentGroupId,
+            activeChatData,
+            memberListWindow,
+            setMemberListWindow,
+            deleteChat,
+            formatTimeAgo,
+            refresh,
+            isSigningOut,
+            handleSignOut,
+          }}
+        >
+          <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies }} />
+          <PanelGroup direction="horizontal" className="w-full h-full flex">
+            <Panel
+              defaultSize={width > 900 ? 40 : 50}
+              minSize={width > 900 ? 40 : 50}
+              className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-black/5 relative w-full flex-col justify-between h-full`}>
+              <div className="relative flex flex-col w-full h-full overflow-y-scroll scrollbar-hide">
+                <div className="w-full h-full">
+                  {isChatSidebarLoading
+                    ?
+                    <SkeletonLoader />
+                    :
+                    selectedSidebar === 1 ?
+                      <ChatSidebar
+                        usersRef={usersRef}
+                        setActiveChatData={(v) => setActiveChatData(v)}
+                        handleChat={(v) => handleChat(v)}
+                        deleteChat={(v) => deleteChat(v)}
+                        setChatOpen={(v) => setChatOpen(v)}
+                        removeFriend={(r) => handleRemoveFriend(r)}
+                        setCurrentGroupId={(v) => setCurrentGroupId(v)}
+                        mode={mode}
+                        setMode={setMode}
+                      />
                       :
-                      selectedSidebar === 1 ?
-                        <ChatSidebar
-                          usersRef={usersRef}
-                          setActiveChatData={(v) => setActiveChatData(v)}
-                          handleChat={(v) => handleChat(v)}
-                          deleteChat={(v) => deleteChat(v)}
-                          setChatOpen={(v) => setChatOpen(v)}
-                          removeFriend={(r) => handleRemoveFriend(r)}
-                          setCurrentGroupId={(v) => setCurrentGroupId(v)}
-                          mode={mode}
-                          setMode={setMode}
-                        />
-                        :
-                        <RequestsSidebar
-                          acceptRequest={(r) => handleAccept(r)}
-                          removeRequest={(r) => handleReject(r)} />
+                      <RequestsSidebar
+                        acceptRequest={(r) => handleAccept(r)}
+                        removeRequest={(r) => handleReject(r)} />
 
 
-                    }
-                  </div>
-                  <div className="w-full h-[4rem] bg-white md:hidden border-t-[1px] border-black/5 flex z-[5]">
-                    <div onClick={() => setSelectedSidebar(1)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 1 && !isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}><MessageSquareHeart color={selectedSidebar === 1 ? "#991b1b" : "#000"} /></div>
-                    <div onClick={() => setSelectedSidebar(2)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 2 && !isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}><BookUser color={selectedSidebar === 2 ? "#991b1b" : "#000"} /></div>
-                    <div onClick={handleSignOut} className={`flex justify-center items-center h-full grow ${isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}>{isSigningOut ? <BeatLoader size={4} color="#991b1b" /> : <LogOut />} </div>
-                  </div>
+                  }
                 </div>
-              </Panel>
-              <PanelResizeHandle className="items-center hidden md:flex bg-[#f7f7f7] relative">
-                <div className="absolute -right-4 cursor-pointer bg-white border-[1px] p-2 rounded-full w-8 h-8 z-[1] flex items-center justify-center">
-                  <GripVertical className="w-4 h-4" />
+                <div className="w-full h-[4rem] bg-white md:hidden border-t-[1px] border-black/5 flex z-[5]">
+                  <div onClick={() => setSelectedSidebar(1)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 1 && !isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}><MessageSquareHeart color={selectedSidebar === 1 ? "#991b1b" : "#000"} /></div>
+                  <div onClick={() => setSelectedSidebar(2)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 2 && !isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}><BookUser color={selectedSidebar === 2 ? "#991b1b" : "#000"} /></div>
+                  <div onClick={handleSignOut} className={`flex justify-center items-center h-full grow ${isSigningOut && "bg-black/5 border-t-[2px] border-red-800"} hover:bg-black/10 p-3`}>{isSigningOut ? <BeatLoader size={4} color="#991b1b" /> : <LogOut />} </div>
                 </div>
-              </PanelResizeHandle>
-              <Panel minSize={35} className={`w-full h-full ${(!isChatOpened && "hidden md:flex justify-center items-center")}`}>
+              </div>
+            </Panel>
+            <PanelResizeHandle className="items-center hidden md:flex bg-[#f7f7f7] relative">
+              <div className="absolute -right-4 cursor-pointer bg-white border-[1px] p-2 rounded-full w-8 h-8 z-[1] flex items-center justify-center">
+                <GripVertical className="w-4 h-4" />
+              </div>
+            </PanelResizeHandle>
+            <Panel minSize={35} className={`w-full h-full ${(!isChatOpened && "hidden md:flex justify-center items-center")}`}>
 
-                <AnimatePresence>
-                  {isChatOpened && (
-                    <ChatBox
-                      setMemberListWindow={(v) => setMemberListWindow(v)}
-                      hideChat={hideChat}
-                    />
-                  )}
-                </AnimatePresence>
+              <AnimatePresence>
+                {isChatOpened && (
+                  <ChatBox
+                    setMemberListWindow={(v) => setMemberListWindow(v)}
+                    hideChat={hideChat}
+                  />
+                )}
+              </AnimatePresence>
 
-                <AnimatePresence>
-                  {!isChatOpened && (
-                    <EmptyChatWindow />
-                  )}
-                </AnimatePresence>
+              <AnimatePresence>
+                {!isChatOpened && (
+                  <EmptyChatWindow />
+                )}
+              </AnimatePresence>
 
-              </Panel>
-            </PanelGroup>
-          </PageContext.Provider>
-        </div>
-      }
-    </ThemeContext.Provider>
+            </Panel>
+          </PanelGroup>
+        </PageContext.Provider>
+      </div>
+    </ThemeProvider.Provider>
   );
 }
 

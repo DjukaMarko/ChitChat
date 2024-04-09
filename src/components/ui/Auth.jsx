@@ -3,7 +3,6 @@ import { auth, db, googleProvider } from "@/config/firebase";
 import { signInWithPopup } from "firebase/auth";
 import arrows from "@/../public/arrows.png";
 import blankpfp from "@/../public/blankpfp.png"
-import wave from "@/../public/wave.svg";
 import { Navbar } from "./Navbar";
 import { Hero } from "./Hero";
 import { DescriptionChitChat } from "./DescriptionChitChat";
