@@ -17,19 +17,21 @@ import { PageContext } from "../misc/PageContext";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { Switch } from "./switch";
 import { useDraggable } from "react-use-draggable-scroll";
+import { ThemeProvider } from "../misc/ThemeProvider";
 
 
 export const ChatSidebar = ({
+
     usersRef,
     removeFriend,
     setActiveChatData,
     setChatOpen,
-    deleteChat,
     setCurrentGroupId,
-    handleChat,
-    mode,
-    setMode }) => {
-    const { myUserData, myGroups, currentGroupId } = useContext(PageContext);
+    handleChat
+
+    }) => {
+    const { myUserData, myGroups, currentGroupId, deleteChat } = useContext(PageContext);
+    const { themeMode, handleChangeThemeMode } = useContext(ThemeProvider);
 
     const ref = useRef(); // We will use React useRef hook to reference the wrapping div:
     const { events } = useDraggable(ref);
@@ -71,23 +73,23 @@ export const ChatSidebar = ({
     };
 
     return (
-        <div className="relative w-full h-[calc(100dvh-4rem)] md:h-[calc(100dvh)] flex flex-col">
-            <div className="relative top-0 left-0 right-0 flex flex-col space-y-6 p-4">
+        <div className="relative bg-backgroundTheme w-full h-[calc(100dvh-4rem)] md:h-[calc(100dvh)] flex flex-col p-6">
+            <div className="relative top-0 left-0 right-0 flex flex-col space-y-6 pb-4">
                 <div className="w-full flex justify-between items-center">
                     <div className="flex flex-col space-y-1">
-                        <p className="text-lg md:text-2xl font-[500]">Chats</p>
-                        <p className="text-sm text-gray-500">People, Groups, Messages</p>
+                        <p className="text-textColor text-lg md:text-2xl font-[500]">Chats</p>
+                        <p className="text-sm text-secondOrderText text-gray-500">People, Groups, Messages</p>
                     </div>
                     <div className="flex items-center space-x-3">
                         <Switch
-                            checked={mode === 'light'}
-                            onCheckedChange={() => setMode(mode === 'light' ? 'dark' : 'light')}
+                            checked={themeMode === 'light'}
+                            onCheckedChange={() => handleChangeThemeMode(themeMode === 'light' ? 'dark' : 'light')}
                         />
                         <DarkModeSwitch
-                            checked={mode === 'dark'}
-                            moonColor="#000"
+                            checked={themeMode === 'dark'}
+                            moonColor="#fff"
                             sunColor="#991b1b"
-                            onChange={(checked) => setMode(checked ? 'dark' : 'light')}
+                            onChange={(checked) => handleChangeThemeMode(checked ? 'dark' : 'light')}
                             size={20}
                         />
                     </div>
@@ -100,8 +102,8 @@ export const ChatSidebar = ({
                     ))}
                 </div>
             </div>
-            <div className="w-full h-[1px] bg-black/5 mb-3"></div>
-            <div className="w-full flex flex-col items-center overflow-y-scroll scrollbar-hide px-4">
+            <div className="w-full h-[1px] bg-secondaryC mb-3"></div>
+            <div className="w-full flex flex-col items-center overflow-y-scroll scrollbar-hide">
                 {myGroups.length === 0 ?
 
                     <div className="flex mt-16 flex-col items-center justify-center space-y-6">

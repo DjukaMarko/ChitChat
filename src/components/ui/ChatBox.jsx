@@ -5,7 +5,6 @@ import newchat from "@/../public/newchat.svg"
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
-import moment from "moment";
 import { ChatMessage } from "./ChatMessage";
 import { motion } from "framer-motion";
 import emptylist from "@/../public/404illustration.jpg"
@@ -23,11 +22,13 @@ import { PageContext } from "../misc/PageContext";
 import Modal from "./Modal";
 import { Button } from "./button";
 import WarningModalPrint from "./WarningModalPrint";
+import { hasOnlyBlankSpaces } from "@/lib/utils";
+import { ThemeProvider } from "../misc/ThemeProvider";
 
 
-export const ChatBox = ({ setMemberListWindow, hideChat }) => {
-    const { activeChatData, deleteChat, currentGroupId, memberListWindow } = useContext(PageContext);
-
+export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => {
+    const { activeChatData, deleteChat, currentGroupId } = useContext(PageContext);
+    const { themeMode } = useContext(ThemeProvider);
     const [loadMoreDocs, setLoadMoreDocs] = useState(1);
     const [text, setText] = useState([]);
     const [textValue, setTextValue] = useState("");
@@ -146,12 +147,6 @@ export const ChatBox = ({ setMemberListWindow, hideChat }) => {
         await sendMessage();
     }
 
-    const hasOnlyBlankSpaces = (str) => {
-        const regex = /^\s*$/;
-        return regex.test(str);
-    }
-
-
     const sendMessage = async () => {
         if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
         setMessageSending(true);
@@ -232,66 +227,6 @@ export const ChatBox = ({ setMemberListWindow, hideChat }) => {
 
     }
 
-    const isDifference = (obj1, obj2, textLength, index) => {
-        if (obj1 === undefined || obj2 === undefined) return;
-
-        const timestamp1 = moment.unix(obj1?.sentAt?.seconds);
-        const timestamp2 = moment.unix(obj2?.sentAt?.seconds);
-
-        const timeDifference = Math.abs(timestamp2.diff(timestamp1, 'minutes'));
-
-        if (timeDifference > 15 || index === textLength - 1) {
-            return true;
-        }
-
-        return false;
-    }
-
-    const compareTimestamps = (obj1, obj2) => {
-        const timestamp1 = moment.unix(obj1?.sentAt?.seconds);
-        const timestamp2 = moment.unix(obj2?.sentAt?.seconds);
-        const now = moment();
-
-        // Get the object with the latest timestamp
-        const latestObject = timestamp1.isAfter(timestamp2) ? obj1 : obj2;
-        const latestTimestamp = moment.unix(latestObject?.sentAt?.seconds);
-
-        // Check if the latest timestamp is today
-        if (latestTimestamp.isSame(now, 'day')) {
-            // Return hours and minutes
-            return latestTimestamp.format("h:mm A");
-        }
-
-        // Check if the latest timestamp is yesterday
-        if (latestTimestamp.isSame(now.clone().subtract(1, 'day'), 'day')) {
-            // Return 'Yesterday' with hours and minutes
-            return "Yesterday, " + latestTimestamp.format("h:mm A");
-        }
-
-        // Return the whole date
-        return latestTimestamp.format("MMM DD, h:mm A");
-    }
-
-    const returnTimestampFirstMessage = (obj1) => {
-        const timestamp = moment.unix(obj1?.sentAt?.seconds);
-        const now = moment();
-
-        // Check if the timestamp is today
-        if (timestamp.isSame(now, 'day')) {
-            // Return hours and minutes
-            return timestamp.format("h:mm A");
-        }
-
-        // Check if the timestamp is yesterday
-        if (timestamp.isSame(now.clone().subtract(1, 'day'), 'day')) {
-            // Return 'Yesterday' with hours and minutes
-            return "Yesterday, " + timestamp.format("h:mm A");
-        }
-
-        // Return the whole date
-        return timestamp.format("MMM DD, h:mm A");
-    }
-
     const handleChatDelete = async () => {
         setIsDeletingChatLoading(true);
         if (activeChatData.length > 1) leaveGroup(); else deleteChat(currentGroupId);
@@ -321,16 +256,16 @@ export const ChatBox = ({ setMemberListWindow, hideChat }) => {
                 exit={{ x: -100 }}
                 transition={{ duration: 0.1 }}
                 className="w-full h-[calc(100dvh)] relative flex flex-col">
-                <div className="relative w-full bg-white border-b-[1px] border-black/5 z-[2]">
+                <div className="relative w-full border-b-[1px] border-secondaryC z-[2]">
                     <Modal isShown={memberListWindow} setShown={setMemberListWindow}>
                         <ModalList />
                     </Modal>
                     <div className="flex items-center justify-between p-4 sm:p-5">
                         <div className="flex items-center">
-                            <ChevronLeft onClick={hideChat} className="md:hidden cursor-pointer mr-4" />
+                            <ChevronLeft color={themeMode === "dark" ? "#ffffff" : "#000000"} onClick={hideChat} className="md:hidden cursor-pointer mr-4" />
                             <>
                                 <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full mr-4" />
-                                <div className="flex flex-col space-y-1">
+                                <div className="flex flex-col space-y-1 text-textColor">
                                     <p className="text-sm">{activeChatData[0]?.display_name}</p>
                                     <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
                                 </div>
@@ -339,17 +274,17 @@ export const ChatBox = ({ setMemberListWindow, hideChat }) => {
                         <div className="p-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Ellipsis className="cursor-pointer" />
+                                    <Ellipsis color={themeMode === "dark" ? "#ffffff" : "#000000"} className="cursor-pointer" />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="m-2">
+                                <DropdownMenuContent className={`m-2 ${themeMode === "dark" ? "dark" : "light"} border-secondaryC bg-backgroundTheme`}>
                                     <DropdownMenuGroup>
-                                        <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center cursor-pointer p-2">
+                                        <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center cursor-pointer p-2 text-textColor">
                                             <UserRoundPlus className="w-5 h-5" />
                                             <p>Add Member</p>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => setIsWarningModalOpen(true)} className="flex space-x-4 items-center cursor-pointer p-2">
-                                            <Trash color="#991b1b" className="w-5 h-5" />
-                                            <p className="text-red-800 font-bold">{activeChatData.length > 1 ? "Leave Group" : "Delete Chat"}</p>
+                                            <Trash color="#b91c1c" className="w-5 h-5" />
+                                            <p className="text-primaryCHover font-bold">{activeChatData.length > 1 ? "Leave Group" : "Delete Chat"}</p>
                                         </DropdownMenuItem>
                                     </DropdownMenuGroup>
                                 </DropdownMenuContent>
@@ -357,7 +292,7 @@ export const ChatBox = ({ setMemberListWindow, hideChat }) => {
                         </div>
                     </div>
                     {isMessageLoading &&
-                        <div className="absolute bg-white border-t-[1px] border-black/5 p-2 w-full flex justify-center items-center">
+                        <div className="absolute bg-backgroundTheme border-t-[1px] border-secondaryC p-2 w-full flex justify-center items-center">
                             <BeatLoader size={10} color="#c91e1e" />
                         </div>
                     }
@@ -367,29 +302,29 @@ export const ChatBox = ({ setMemberListWindow, hideChat }) => {
                     onScroll={handleScroll}
                     className="w-full h-[calc(100dvh)] overflow-y-scroll flex flex-col-reverse py-6">
                     {currentMembers.length > 0 && text.map((m, index) => {
-                        return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} isDifference={(v1, v2, v3) => isDifference(v1, v2, v3)} text={text} m={m} index={index} returnTimestampFirstMessage={(v1) => returnTimestampFirstMessage(v1)} compareTimestamps={(v1, v2) => compareTimestamps(v1, v2)} isMessageSending={isMessageSending} isMessageLoading={isMessageLoading} />
+                        return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} text={text} m={m} index={index} isMessageSending={isMessageSending} isMessageLoading={isMessageLoading} />
                     })}
                     <div className={`w-full flex justify-center`}>
                         {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (
                             <div className="flex flex-col items-center justify-center p-6">
                                 <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
-                                <p className="text-sm md:text-md text-center">Welcome to the conversation! Write something down to start the convo.</p>
+                                <p className="text-sm md:text-md text-center text-textColor">Welcome to the conversation! Write something down to start the convo.</p>
                             </div>
                         )}
                     </div>
 
                 </div>
-                <div className="bg-white w-full border-t-[1px] px-6 py-3 flex space-x-4">
+                <div className="w-full border-t-[1px] border-secondaryC px-6 py-3 flex space-x-4">
                     <form className="flex space-x-6 items-center w-full">
                         <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleAttachClick}>
-                            <Paperclip width={20} height={20} color="#991b1b" />
+                            <Paperclip width={20} height={20} color="#b91c1c" />
                         </motion.a>
                         <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleImageUploadClick}>
-                            <Images width={20} height={20} color="#991b1b" />
+                            <Images width={20} height={20} color="#b91c1c" />
                         </motion.a>
                         <input id="fileInput1" type="file" onChange={handleFileUpload} className="hidden" />
                         <input id="fileInput2" type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
-                        <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm py-2 bg-[#f2f2f2] hover:bg-[#e5e5e5] placeholder-[#9e9e9e] rounded-full px-5 w-full outline-0" placeholder="Type message here" />
+                        <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm py-2 bg-secondaryC hover:bg-secondaryCHover placeholder-[#9e9e9e] rounded-full px-5 w-full outline-0" placeholder="Type message here" />
                         <motion.button whileHover={{ scale: 1.05 }} type="submit" onClick={buttonSendClick}><SendHorizontal width={20} height={20} color="#991b1b" /></motion.button>
                     </form>
                 </div>

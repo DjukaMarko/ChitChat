@@ -3,7 +3,8 @@ import plant from "@/../public/plant.png";
 import graphics2 from "@/../public/graphics2.png";
 import graphics3 from "@/../public/graphics4.png";
 import { useInView } from "react-intersection-observer";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
+import { ThemeProvider, theme } from "../misc/ThemeProvider";
 
 const textVariants = {
     hidden: {
@@ -31,7 +32,7 @@ const textVariants = {
     },
   };
 export const DescriptionChitChat = ({ handleSignIn }) => {
-
+  const { themeMode } = useContext(ThemeProvider);
     const controls = useAnimation();
     const [ref, inView] = useInView();
     useEffect(() => {
@@ -40,7 +41,7 @@ export const DescriptionChitChat = ({ handleSignIn }) => {
       }
     }, [inView]);
   return (
-    <div className="w-full flex px-8 justify-center">
+    <motion.div className="w-full flex px-8 justify-center">
       <motion.div
         ref={ref}
         initial="hidden"
@@ -53,7 +54,7 @@ export const DescriptionChitChat = ({ handleSignIn }) => {
           <div className="flex max-w-[70ch] md:ml-36">
             <div className="flex items-center md:items-end space-y-4 flex-col">
                 <h1 className="font-[600] text-5xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#991b1b] to-[#b91c1c]">DISCOVER</h1>
-                <p className="font-[500] text-center text-[12px] md:text-[14px] lg:text-[16px] tracking-wide leading-[1.55] md:text-right font-poppins">
+                <p className="font-[500] text-center text-[12px] md:text-[14px] lg:text-[16px] tracking-wide leading-[1.55] md:text-right font-poppins text-textColor">
                 ChitChat is not just another chat application; it's a dynamic
                 platform designed to revolutionize the way you connect and
                 communicate with others. Our innovative features and user-friendly
@@ -69,7 +70,7 @@ export const DescriptionChitChat = ({ handleSignIn }) => {
             <div className="w-[30px] bg-gradient-to-b from-[#991b1b] to-[#b91c1c] mr-4"></div>
             <div className="flex items-center md:items-start space-y-4 flex-col">
                 <h1 className="font-[600] text-5xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#991b1b] to-[#b91c1c]">CONNECT</h1>
-                <p className="font-[500] text-[12px] md:text-[14px] lg:text-[16px] tracking-wide leading-[1.55] text-center md:text-left font-poppins">
+                <p className={`font-[500] text-[12px] md:text-[14px] lg:text-[16px] tracking-wide leading-[1.55] text-center md:text-left font-poppins text-textColor`}>
                 With ChitChat, you can effortlessly engage in meaningful
                 conversations, share your thoughts, and express yourself through
                 text, voice messages, images, and more. Our cutting-edge
@@ -86,7 +87,7 @@ export const DescriptionChitChat = ({ handleSignIn }) => {
           <div className="flex max-w-[70ch] md:ml-36">
             <div className="flex items-center md:items-end space-y-4 flex-col">
                 <h1 className="font-[600] text-5xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#6A0606] to-[#DF2121]">CHITCHAT</h1>
-                <p className="font-[500] text-center text-[12px] md:text-[14px] lg:text-[16px] tracking-wide leading-[1.55] md:text-right font-poppins">
+                <p className={`font-[500] text-center text-[12px] md:text-[14px] lg:text-[16px] tracking-wide leading-[1.55] md:text-right font-poppins text-textColor`}>
                 Whether you're looking to build relationships, foster teamwork, or simply have a good time, ChitChat is here to make every conversation count. Download ChitChat now and experience a new era of seamless communication. Get ready to explore, connect, and chat like never before!
                 </p>
             </div>
@@ -106,6 +107,6 @@ export const DescriptionChitChat = ({ handleSignIn }) => {
           </p>
         </motion.button>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };

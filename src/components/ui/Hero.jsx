@@ -2,8 +2,10 @@ import { useInView } from "react-intersection-observer";
 import google from "@/../public/google.png"
 import graphics1 from "@/../public/graphics1.svg";
 import wave from "@/../public/wave.svg";
+import waveDark from "@/../public/waveDark.svg";
 import { motion, useAnimation } from "framer-motion";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
+import { ThemeProvider, theme } from "../misc/ThemeProvider";
 
 const textVariants = {
   hidden: {
@@ -32,6 +34,7 @@ const childVariants = {
 };
 
 export const Hero = ({ handleSignIn }) => {
+  const { themeMode } = useContext(ThemeProvider);
   const controls = useAnimation();
   const [ref, inView] = useInView();
   useEffect(() => {
@@ -46,7 +49,8 @@ export const Hero = ({ handleSignIn }) => {
       variants={textVariants}
       transition={{ duration: 0.3 }}
       className="relative px-[2rem] flex justify-center items-center flex-col-reverse space-y-10 lg:space-y-0 lg:flex-row pt-[10rem] md:pt-[15rem] 2xl:px-[15rem]">
-      <img className="absolute left-0 right-0 -bottom-14" src={wave} />
+
+      <img className="absolute left-0 right-0 bottom-0" src={themeMode === "dark" ? waveDark: wave} />
       <div className="flex flex-col">
         <motion.p
           variants={childVariants}
@@ -56,7 +60,7 @@ export const Hero = ({ handleSignIn }) => {
         <div className="relative">
           <motion.div variants={childVariants} className="flex max-w-[70ch] mb-12">
             <div className="w-[30px] bg-gradient-to-b from-[#991b1b] to-[#b91c1c] mr-4"></div>
-            <p className="font-[500] text-[14px] md:text-[16px] tracking-wide leading-[1.55] text-left font-poppins">
+            <p className="font-[500] text-[14px] md:text-[16px] tracking-wide leading-[1.55] text-left font-poppins text-textColor">
               Discover a world of possibilities with ChitChat's diverse range of
               features. Join public chatrooms to connect with like-minded
               individuals, create private groups to collaborate with teammates, or
