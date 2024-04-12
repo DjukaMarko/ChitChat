@@ -302,7 +302,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                     onScroll={handleScroll}
                     className="w-full h-[calc(100dvh)] overflow-y-scroll flex flex-col-reverse py-6">
                     {currentMembers.length > 0 && text.map((m, index) => {
-                        return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} text={text} m={m} index={index} isMessageSending={isMessageSending} isMessageLoading={isMessageLoading} />
+                        return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} text={text} m={m} index={index} isMessageSending={isMessageSending} />
                     })}
                     <div className={`w-full flex justify-center`}>
                         {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (
@@ -324,8 +324,8 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                         </motion.a>
                         <input id="fileInput1" type="file" onChange={handleFileUpload} className="hidden" />
                         <input id="fileInput2" type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
-                        <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm py-2 bg-secondaryC hover:bg-secondaryCHover placeholder-[#9e9e9e] rounded-full px-5 w-full outline-0" placeholder="Type message here" />
-                        <motion.button whileHover={{ scale: 1.05 }} type="submit" onClick={buttonSendClick}><SendHorizontal width={20} height={20} color="#991b1b" /></motion.button>
+                        <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm py-2 bg-secondaryC hover:bg-secondaryCHover placeholder-inputInnerElements rounded-full px-5 w-full outline-0" placeholder="Type message here" />
+                        <motion.button whileHover={{ scale: 1.05 }} type="submit" onClick={buttonSendClick}><SendHorizontal width={20} height={20} color="#b91c1c" /></motion.button>
                     </form>
                 </div>
             </motion.div>

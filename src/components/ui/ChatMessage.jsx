@@ -1,7 +1,7 @@
 import { BeatLoader } from "react-spinners";
-import { compareTimestamps, returnTimestampFirstMessage, isDifference, isValidUrl } from "@/lib/utils";
+import { compareTimestamps, isDifference, isValidUrl } from "@/lib/utils";
 
-export const ChatMessage = ({ side, isMessageLoading, text, m, index, isMessageSending, currentMembers }) => {
+export const ChatMessage = ({ side, text, m, index, isMessageSending, currentMembers }) => {
     let otherMember = currentMembers.find(member => member.userId === m.sentBy);
 
     /*

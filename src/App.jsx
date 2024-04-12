@@ -2,7 +2,7 @@ import "./App.css";
 import { useEffect, useState } from "react";
 import { Auth } from "./components/ui/Auth";
 import Cookies from "universal-cookie";
-import { ThemeProvider, theme } from "./components/misc/ThemeProvider";
+import { ThemeProvider } from "./components/misc/ThemeProvider";
 import HomeDashboard from "./components/ui/HomeDashboard";
 
 
@@ -20,9 +20,9 @@ function App() {
     setThemeMode(str);
   }
 
-  if(!isAuth) return <ThemeProvider.Provider value={{ theme, themeMode, handleChangeThemeMode }}><Auth /></ThemeProvider.Provider>;
+  if(!isAuth) return <ThemeProvider.Provider value={{ themeMode, handleChangeThemeMode }}><Auth /></ThemeProvider.Provider>;
   return (
-    <ThemeProvider.Provider value={{ theme, themeMode, handleChangeThemeMode }}>
+    <ThemeProvider.Provider value={{ themeMode, handleChangeThemeMode }}>
       <HomeDashboard cookies={cookies} />
     </ThemeProvider.Provider>
   );

@@ -4,7 +4,7 @@ import { formatTimeAgo } from "@/lib/utils";
 export const ChatHistory = ({ isSelected, item, index, handleClick }) => {
 
     return (
-        <div onClick={handleClick} className={`w-full ${isSelected ? "bg-secondaryCHover" : "bg-secondaryC"} rounded-xl cursor-pointer p-3 inline-flex relative space-x-4 hover:bg-secondaryCHover cursor-default mb-1`} key={index}>
+        <div onClick={handleClick} className={`w-full ${isSelected ? "bg-secondaryCHover" : "bg-terciaryC"} rounded-xl cursor-pointer p-3 inline-flex relative space-x-4 hover:bg-secondaryCHover cursor-default mb-1`} key={index}>
 
             <div className="flex space-x-4 items-center">
                 <img src={item?.members[0]?.photoUrl} referrerPolicy="no-referrer" className="w-[50px] h-[50px] rounded-full border-[1px] border-black/20" />

@@ -10,10 +10,9 @@ import { Footer } from "./Footer";
 import { MobileNav } from "./MobileNav";
 import { useContext, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { motion } from "framer-motion";
 import { collection, getDocs, doc, query, where, setDoc } from "firebase/firestore";
 import { refresh } from "@/lib/utils";
-import { ThemeProvider, theme } from "../misc/ThemeProvider";
+import { ThemeProvider } from "../misc/ThemeProvider";
 
 const cookies = new Cookies();
 

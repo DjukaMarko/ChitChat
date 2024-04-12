@@ -5,7 +5,7 @@ import wave from "@/../public/wave.svg";
 import waveDark from "@/../public/waveDark.svg";
 import { motion, useAnimation } from "framer-motion";
 import { useContext, useEffect } from "react";
-import { ThemeProvider, theme } from "../misc/ThemeProvider";
+import { ThemeProvider } from "../misc/ThemeProvider";
 
 const textVariants = {
   hidden: {

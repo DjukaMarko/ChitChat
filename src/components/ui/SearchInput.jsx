@@ -9,7 +9,7 @@ export const SearchInput = ({ searchInput, setSearchInput, handleSearchSubmit })
                 <input
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    className="text-sm text-textColor outline-0 border-0 w-full bg-secondaryC font-[400] placeholder-[#9e9e9e] group-hover:bg-secondaryCHover"
+                    className="text-sm text-textColor outline-0 border-0 w-full bg-secondaryC font-[400] placeholder-inputInnerElements group-hover:bg-secondaryCHover"
                     type="text"
                     placeholder="Search For Friends"
                 />

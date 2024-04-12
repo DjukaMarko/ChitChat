@@ -73,7 +73,7 @@ export const ChatSidebar = ({
     };
 
     return (
-        <div className="relative bg-backgroundTheme w-full h-[calc(100dvh-4rem)] md:h-[calc(100dvh)] flex flex-col p-6">
+        <>
             <div className="relative top-0 left-0 right-0 flex flex-col space-y-6 pb-4">
                 <div className="w-full flex justify-between items-center">
                     <div className="flex flex-col space-y-1">
@@ -108,7 +108,7 @@ export const ChatSidebar = ({
 
                     <div className="flex mt-16 flex-col items-center justify-center space-y-6">
                         <img src={emptychat} className="w-32 sm:w-64" />
-                        <p className="text-sm text-center max-w-[30ch]">Shhh... Did you hear that? The chat is whispering for some attention. Time to give it a voice!</p>
+                        <p className="text-sm text-center text-textColor max-w-[30ch]">Shhh... Did you hear that? The chat is whispering for some attention. Time to give it a voice!</p>
                     </div>
                     :
                     <AnimatePresence>
@@ -140,6 +140,6 @@ export const ChatSidebar = ({
                     </AnimatePresence>
                 }
             </div>
-        </div>
+        </>
     )
 }

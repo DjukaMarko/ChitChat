@@ -4,7 +4,7 @@ import graphics2 from "@/../public/graphics2.png";
 import graphics3 from "@/../public/graphics4.png";
 import { useInView } from "react-intersection-observer";
 import { useContext, useEffect } from "react";
-import { ThemeProvider, theme } from "../misc/ThemeProvider";
+import { ThemeProvider } from "../misc/ThemeProvider";
 
 const textVariants = {
     hidden: {

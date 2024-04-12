@@ -380,9 +380,9 @@ export default function HomeDashboard({ cookies }) {
                     <Panel
                         defaultSize={width > 900 ? 40 : 50}
                         minSize={width > 900 ? 40 : 50}
-                        className={` ${isChatOpened ? "hidden md:block" : "block"} flex bg-white border-r-[1px] border-secondaryC relative w-full flex-col justify-between h-full`}>
-                        <div className="bg-backgroundTheme relative flex flex-col w-full h-full overflow-y-scroll scrollbar-hide">
-                            <div className="w-full h-full">
+                        className={` ${isChatOpened ? "hidden md:block" : "block"} flex border-r-[1px] border-secondaryC relative w-full flex-col justify-between h-full`}>
+                        <div className="relative flex flex-col w-full h-full overflow-y-scroll scrollbar-hide">
+                            <div className="relative w-full h-[calc(100dvh-3rem)] md:h-[calc(100dvh)] flex flex-col p-4">
                                 {isChatSidebarLoading
                                     ?
                                     <SkeletonLoader />
@@ -404,10 +404,10 @@ export default function HomeDashboard({ cookies }) {
 
                                 }
                             </div>
-                            <div className="bg-backgroundTheme w-full h-[4rem] md:hidden border-t-[1px] border-secondaryC flex z-[5]">
-                                <div onClick={() => setSelectedSidebar(1)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 1 && !isSigningOut && "bg-secondaryCHover border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}><MessageSquareHeart color={selectedSidebar === 1 ? "#991b1b" :  themeMode === "dark" ? "#ffffff" : "#000000"} /></div>
-                                <div onClick={() => setSelectedSidebar(2)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 2 && !isSigningOut && "bg-secondaryC border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}><BookUser color={selectedSidebar === 2 ? "#991b1b" :  themeMode === "dark" ? "#ffffff" : "#000000"} /></div>
-                                <div onClick={handleSignOut} className={`flex justify-center items-center h-full grow ${isSigningOut && "bg-secondaryC border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}>{isSigningOut ? <BeatLoader size={4} color="#991b1b" /> : <LogOut color={themeMode === "dark" ? "#ffffff" : "#000000"} />} </div>
+                            <div className="bg-backgroundTheme w-full h-[3rem] md:hidden border-t-[1px] border-secondaryC flex z-[5]">
+                                <div onClick={() => setSelectedSidebar(1)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 1 && !isSigningOut && "bg-secondaryCHover border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}><MessageSquareHeart size={20} color={selectedSidebar === 1 ? "#991b1b" :  themeMode === "dark" ? "#ffffff" : "#000000"} /></div>
+                                <div onClick={() => setSelectedSidebar(2)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 2 && !isSigningOut && "bg-secondaryC border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}><BookUser size={20} color={selectedSidebar === 2 ? "#991b1b" :  themeMode === "dark" ? "#ffffff" : "#000000"} /></div>
+                                <div onClick={handleSignOut} className={`flex justify-center items-center h-full grow ${isSigningOut && "bg-secondaryC border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}>{isSigningOut ? <BeatLoader size={4} color="#991b1b" /> : <LogOut size={20} color={themeMode === "dark" ? "#ffffff" : "#000000"} />} </div>
                             </div>
                         </div>
                     </Panel>

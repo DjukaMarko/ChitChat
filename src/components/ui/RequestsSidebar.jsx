@@ -16,13 +16,13 @@ export const RequestsSidebar = ({ acceptRequest, removeRequest }) => {
     }
 
     return (
-        <div className="bg-backgroundTheme relative w-full h-[calc(100dvh-4rem)] md:h-[calc(100dvh)] flex flex-col">
-            <div className="flex flex-col space-y-8 p-4">
-                <div className="w-full flex justify-between items-center">
-                    <div className="flex flex-col space-y-1">
-                        <p className="text-lg text-textColor md:text-2xl font-[500]">Requests</p>
-                    </div>
+        <div className="flex flex-col space-y-8">
+            <div className="w-full flex justify-between items-center">
+                <div className="flex flex-col space-y-1">
+                    <p className="text-lg text-textColor md:text-2xl font-[500]">Requests</p>
                 </div>
+            </div>
+            <div className="w-full h-full overflow-y-scroll">
                 {myUserData.f_requests.length == 0 ?
 
                     <div className="w-full h-full flex justify-center items-center">
@@ -32,7 +32,7 @@ export const RequestsSidebar = ({ acceptRequest, removeRequest }) => {
                         </div>
                     </div>
                     :
-                    <div className="w-full flex flex-col space-y-4 min-h-screen overflow-y-auto">
+                    <div className="w-full h-screen-safe flex flex-col space-y-4 overflow-y-auto">
                         {myUserData.f_requests.map(e => {
                             return (
                                 <div key={e} className="w-full flex items-center justify-between p-4 rounded-full border-[1px] border-secondaryC shadow-sm">

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useContext, useEffect, useState } from "react";
 import { Switch } from "./switch";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
-import { ThemeProvider, theme } from "../misc/ThemeProvider";
+import { ThemeProvider } from "../misc/ThemeProvider";
 import { Menu } from "lucide-react";
 
 export const Navbar = ({ setMobileNavClicked }) => {
