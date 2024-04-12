@@ -79,28 +79,45 @@ export const SearchBar = ({ usersRef }) => {
               animate={{ height: "16rem" }} 
               exit={{ height: 0 }} 
               transition={{ duration: 0.2 }} 
-              className="flex z-[1] rounded-b-xl w-full border-t-[1px] border-secondaryCHover">
+              className="flex rounded-b-xl w-full max-h-64 border-t-[1px] border-secondaryCHover">
 
-              <div className="grow h-full grid grid-rows-3 grid-columns-3 gap-1 rounded-bl-lg border-r-[1px] border-secondaryCHover p-1">
+              <div className="grow h-full grid grid-cols-3 xl:grid-cols-4 gap-1 rounded-bl-lg border-r-[1px] border-secondaryCHover p-1 overflow-y-auto">
+                <div className="bg-secondaryCHover rounded-lg col-span-2 row-span-2"></div>
                 <div className="bg-secondaryCHover rounded-lg"></div>
-                <div className="bg-secondaryCHover rounded-lg col-start-2"></div>
+                <div className="bg-secondaryCHover rounded-lg"></div>
+                <div className="bg-secondaryCHover rounded-lg"></div>
+                <div className="bg-secondaryCHover rounded-lg"></div>
                 <div className="bg-secondaryCHover rounded-lg"></div>
                 <div className="bg-secondaryCHover rounded-lg"></div>
                 <div className="bg-secondaryCHover rounded-lg"></div>
                 <div className="bg-secondaryCHover rounded-lg"></div>
               </div>
-              <div className="grow h-full rounded-br-lg flex flex-col space-y-1 p-1 overflow-y-scroll">
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-                <div className="w-full h-12 bg-secondaryCHover rounded-lg"></div>
-          
+
+              <div className="grow h-full rounded-br-lg flex flex-col space-y-1 p-1 overflow-y-scroll text-textColor text-sm">
+                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
+                  <p>Lorem Ipsum</p>
+                </div>
+                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
+                  <p>Lorem Ipsum</p>
+                </div>
+                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
+                  <p>Lorem Ipsum</p>
+                </div>
+                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
+                  <p>Lorem Ipsum</p>
+                </div>
+                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
+                  <p>Lorem Ipsum</p>
+                </div>
+                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
+                  <p>Lorem Ipsum</p>
+                </div>
+                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
+                  <p>Lorem Ipsum</p>
+                </div>
+                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
+                  <p>Lorem Ipsum</p>
+                </div>
               </div>
             </motion.div>
           )}

@@ -324,7 +324,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                         </motion.a>
                         <input id="fileInput1" type="file" onChange={handleFileUpload} className="hidden" />
                         <input id="fileInput2" type="file" onChange={handleFileUpload} accept="image/*" className="hidden" />
-                        <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm py-2 bg-secondaryC hover:bg-secondaryCHover placeholder-inputInnerElements rounded-full px-5 w-full outline-0" placeholder="Type message here" />
+                        <input value={textValue} onChange={addText} type="text" className="text-xs md:text-sm text-textColor py-2 bg-secondaryC hover:bg-secondaryCHover placeholder-inputInnerElements rounded-full px-5 w-full outline-0" placeholder="Type message here" />
                         <motion.button whileHover={{ scale: 1.05 }} type="submit" onClick={buttonSendClick}><SendHorizontal width={20} height={20} color="#b91c1c" /></motion.button>
                     </form>
                 </div>

@@ -74,33 +74,35 @@ export const theme = {
     },
   },
 };
-export const plugins = [require("tailwindcss-animate"), require('tailwind-scrollbar-hide'),
-createThemes({
-  light: {
-    primaryC: "#991b1b",
-    primaryCHover: "#b91c1c",
-    secondaryC: "#f2f2f2",
-    terciaryC: "#fafafa",
-    secondaryCHover: "#e5e5e5",
-    secondOrderText: "#6b7280",
-    inputInnerElements: "#9e9e9e",
-    landingWaves: "#f8f8f8",
-    backgroundTheme: "#ffffff",
-    textColor: "#000000",
-    borderColor: "#757575"
-  },
-  dark: {
-    primaryC: "#991b1b",
-    primaryCHover: "#b91c1c",
-    secondaryC: "#454545",
-    terciaryC: "#303030",
-    secondaryCHover: "#2b2b2b",
-    secondOrderText: "#e8e8e8",
-    inputInnerElements: "#9e9e9e",
-    landingWaves: "#2e2e2e",
-    backgroundTheme: "#333333",
-    textColor: "#ffffff",
-    borderColor:"#c2c2c2"
-  }
-})
+export const plugins = [
+  require('tailwind-scrollbar-hide'),
+  require("tailwindcss-animate"), 
+  createThemes({
+    light: {
+      primaryC: "#991b1b",
+      primaryCHover: "#b91c1c",
+      secondaryC: "#f2f2f2",
+      terciaryC: "#fafafa",
+      secondaryCHover: "#e5e5e5",
+      secondOrderText: "#6b7280",
+      inputInnerElements: "#9e9e9e",
+      landingWaves: "#f8f8f8",
+      backgroundTheme: "#ffffff",
+      textColor: "#000000",
+      borderColor: "#757575"
+    },
+    dark: {
+      primaryC: "#991b1b",
+      primaryCHover: "#b91c1c",
+      secondaryC: "#454545",
+      terciaryC: "#303030",
+      secondaryCHover: "#2b2b2b",
+      secondOrderText: "#e8e8e8",
+      inputInnerElements: "#9e9e9e",
+      landingWaves: "#2e2e2e",
+      backgroundTheme: "#333333",
+      textColor: "#ffffff",
+      borderColor:"#c2c2c2"
+    }
+  })
 ];
