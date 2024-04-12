@@ -103,7 +103,7 @@ export const ChatSidebar = ({
                 </div>
             </div>
             <div className="w-full h-[1px] bg-secondaryC mb-3"></div>
-            <div className="w-full flex flex-col items-center overflow-y-scroll scrollbar-hide">
+            <div className="w-full min-h-[24rem] flex flex-col items-center overflow-y-scroll scrollbar-hide">
                 {myGroups.length === 0 ?
 
                     <div className="flex mt-16 flex-col items-center justify-center space-y-6">

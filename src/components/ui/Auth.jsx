@@ -21,7 +21,7 @@ export const Auth = () => {
   const [selectedNavbar, setSelectedNavbar] = useState("Home");
   const usersRef = collection(db, "users");
 
-  const { themeMode, handleChangeThemeMode } = useContext(ThemeProvider);
+  const { themeMode } = useContext(ThemeProvider);
 
   const handleSignIn = async () => {
     try {
