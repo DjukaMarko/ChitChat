@@ -22,7 +22,7 @@ export const RequestsSidebar = ({ acceptRequest, removeRequest }) => {
                     <p className="text-lg text-textColor md:text-2xl font-[500]">Requests</p>
                 </div>
             </div>
-            <div className="w-full h-full overflow-y-scroll">
+            <div className="w-full h-full overflow-y-scroll scrollbar-hide">
                 {myUserData.f_requests.length == 0 ?
 
                     <div className="w-full h-full flex justify-center items-center">

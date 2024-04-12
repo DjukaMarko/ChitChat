@@ -81,7 +81,7 @@ export const SearchBar = ({ usersRef }) => {
               transition={{ duration: 0.2 }} 
               className="flex rounded-b-xl w-full max-h-64 border-t-[1px] border-secondaryCHover">
 
-              <div className="grow h-full grid grid-cols-3 xl:grid-cols-4 gap-1 rounded-bl-lg border-r-[1px] border-secondaryCHover p-1 overflow-y-auto">
+              <div className="grow h-full grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 rounded-bl-lg border-r-[1px] border-secondaryCHover p-1 overflow-y-auto">
                 <div className="bg-secondaryCHover rounded-lg col-span-2 row-span-2"></div>
                 <div className="bg-secondaryCHover rounded-lg"></div>
                 <div className="bg-secondaryCHover rounded-lg"></div>
@@ -93,7 +93,7 @@ export const SearchBar = ({ usersRef }) => {
                 <div className="bg-secondaryCHover rounded-lg"></div>
               </div>
 
-              <div className="grow h-full rounded-br-lg flex flex-col space-y-1 p-1 overflow-y-scroll text-textColor text-sm">
+              <div className="grow h-full rounded-br-lg flex flex-col space-y-1 p-1 overflow-y-scroll scrollbar-hide text-textColor text-sm">
                 <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
                   <p>Lorem Ipsum</p>
                 </div>

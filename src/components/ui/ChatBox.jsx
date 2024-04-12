@@ -300,7 +300,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                 <div
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="w-full h-[calc(100dvh)] overflow-y-scroll flex flex-col-reverse py-6">
+                    className="w-full h-[calc(100dvh)] overflow-y-scroll scrollbar-hide flex flex-col-reverse py-6">
                     {currentMembers.length > 0 && text.map((m, index) => {
                         return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} text={text} m={m} index={index} isMessageSending={isMessageSending} />
                     })}
