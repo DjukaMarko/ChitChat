@@ -7,7 +7,7 @@ export const SkeletonLoader = () => {
   const { themeMode } = useContext(ThemeProvider);
   return (
     <SkeletonTheme baseColor={themeMode === "dark" ? "#454545" : "#f2f2f2"} highlightColor={themeMode === "dark" ? "#363636" : "#e5e5e5"}>
-      <section className='p-6 w-full h-[calc(100dvh)] overflow-hidden'>
+      <section className='w-full h-[calc(100dvh)] overflow-hidden'>
 
         <div className="flex justify-between">
           <Skeleton className="hover:border-[2px] border-[#bababa]" circle={true} height={30} width={30} />
