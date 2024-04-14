@@ -14,36 +14,45 @@ export const SearchBar = ({ usersRef }) => {
   const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
-    if (searchInput === "") {
-      setSearchMenuOpened(false);
-      setPossibleRequests([]);
-    }
+    // Define a function to update state after a delay
+    const updateStateWithDelay = () => {
+      if (searchInput === "") {
+        setSearchMenuOpened(false);
+        setPossibleRequests([]);
+      }
+    };
+
+    // Set a timeout to delay state update by 1 second
+    const timeoutId = setTimeout(updateStateWithDelay, 400);
+
+    // Clear timeout when component unmounts or when searchInput changes
+    return () => clearTimeout(timeoutId);
   }, [searchInput]);
 
   const handleSearchSubmit = async (str) => {
     try {
-        console.log(str)
-        if (str !== "") {
-            const q = query(
-                usersRef,
-                and(
-                    where("username", ">=", str.toLowerCase()),
-                    where("username", "<=", str.toLowerCase() + "\uf8ff"),
-                    where("username", "!=", auth?.currentUser?.displayName.toLowerCase())
-                )
-            );
-            const listUsers = await getDocs(q);
-            const requests = listUsers.docs.map((d) => {
-                const docSnap = d.data();
-                return docSnap;
-            });
-            setPossibleRequests(requests);
-            setLoading(false);
-        }
+      console.log(str)
+      if (str !== "") {
+        const q = query(
+          usersRef,
+          and(
+            where("username", ">=", str.toLowerCase()),
+            where("username", "<=", str.toLowerCase() + "\uf8ff"),
+            where("username", "!=", auth?.currentUser?.displayName.toLowerCase())
+          )
+        );
+        const listUsers = await getDocs(q);
+        const requests = listUsers.docs.map((d) => {
+          const docSnap = d.data();
+          return docSnap;
+        });
+        setPossibleRequests(requests);
+        setLoading(false);
+      }
     } catch (e) {
-        console.error(e);
+      console.error(e);
     }
-};
+  };
 
   const handleSendRequest = async (r) => {
     try {
@@ -85,12 +94,12 @@ export const SearchBar = ({ usersRef }) => {
         <SearchInput isSearchMenuOpened={isSearchMenuOpened} setSearchMenuOpened={setSearchMenuOpened} searchInput={searchInput} setSearchInput={setSearchInput} usersRef={usersRef} possibleRequests={possibleRequests} setPossibleRequests={v => setPossibleRequests(v)} handleSearchSubmit={handleSearchSubmit} />
         <AnimatePresence>
           {isSearchMenuOpened && (
-            <motion.div 
-              key="searchAnimation" 
-              initial={{ height: 0, opacity:0 }} 
-              animate={{ height: "16rem", opacity:1 }} 
-              exit={{ height: 0, opacity:0 }} 
-              transition={{ duration: 0.2 }} 
+            <motion.div
+              key="searchAnimation"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "16rem", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
               className="flex rounded-b-xl w-full max-h-64 border-t-[1px] border-secondaryCHover">
 
               <GridRandomFriends handleSendRequest={handleSendRequest} />

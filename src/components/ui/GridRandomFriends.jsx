@@ -84,6 +84,10 @@ const SkeletonLoader = () => {
             <div className="bg-secondaryCHover rounded-lg"><Skeleton className="bg-skeletonColor w-full h-full" /></div>
             <div className="bg-secondaryCHover rounded-lg"><Skeleton className="bg-skeletonColor w-full h-full" /></div>
             <div className="bg-secondaryCHover rounded-lg"><Skeleton className="bg-skeletonColor w-full h-full" /></div>
+            <div className="bg-secondaryCHover rounded-lg"><Skeleton className="bg-skeletonColor w-full h-full" /></div>
+            <div className="bg-secondaryCHover rounded-lg"><Skeleton className="bg-skeletonColor w-full h-full" /></div>
+            <div className="bg-secondaryCHover rounded-lg"><Skeleton className="bg-skeletonColor w-full h-full" /></div>
+            <div className="bg-secondaryCHover rounded-lg"><Skeleton className="bg-skeletonColor w-full h-full" /></div>
         </>
     )
 }
