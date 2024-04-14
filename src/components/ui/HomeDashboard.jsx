@@ -372,6 +372,7 @@ export default function HomeDashboard({ cookies }) {
                     myGroups,
                     currentGroupId,
                     activeChatData,
+                    setMemberListWindow,
                     deleteChat,
                     usersRef
                 }}
