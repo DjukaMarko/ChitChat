@@ -1,6 +1,6 @@
 import { MousePointerClick, Search } from "lucide-react"
 
-export const SearchInput = ({ setSearchMenuOpened, searchInput, setSearchInput, handleSearchSubmit, possibleRequests }) => {
+export const SearchInput = ({ isSearchMenuOpened, setSearchMenuOpened, searchInput, setSearchInput, handleSearchSubmit, possibleRequests }) => {
     const handleChange = async (e) => {
         setSearchMenuOpened(true);
         setSearchInput(e.target.value);
@@ -8,7 +8,7 @@ export const SearchInput = ({ setSearchMenuOpened, searchInput, setSearchInput, 
     }
     return (
         <div className="group">
-            <div className={`py-2 flex space-x-2 items-center px-5 ${possibleRequests.length > 0 ? "rounded-t-xl" : "rounded-xl"} bg-secondaryC group-hover:bg-secondaryCHover font-light outline-0`}>
+            <div className={`py-2 flex space-x-2 items-center px-5 ${isSearchMenuOpened ? "rounded-t-xl" : "rounded-xl"} bg-secondaryC group-hover:bg-secondaryCHover font-light outline-0`}>
                 <Search color="#9e9e9e" width={20} height={20} />
                 <form className="w-full flex" onClick={(e) => e.preventDefault()}>
                     <input

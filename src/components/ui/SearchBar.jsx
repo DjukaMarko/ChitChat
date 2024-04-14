@@ -82,7 +82,7 @@ export const SearchBar = ({ usersRef }) => {
   return (
     <>
       <div className="flex relative flex-col bg-secondaryC rounded-xl">
-        <SearchInput setSearchMenuOpened={setSearchMenuOpened} searchInput={searchInput} setSearchInput={setSearchInput} usersRef={usersRef} possibleRequests={possibleRequests} setPossibleRequests={v => setPossibleRequests(v)} handleSearchSubmit={handleSearchSubmit} />
+        <SearchInput isSearchMenuOpened={isSearchMenuOpened} setSearchMenuOpened={setSearchMenuOpened} searchInput={searchInput} setSearchInput={setSearchInput} usersRef={usersRef} possibleRequests={possibleRequests} setPossibleRequests={v => setPossibleRequests(v)} handleSearchSubmit={handleSearchSubmit} />
         <AnimatePresence>
           {isSearchMenuOpened && (
             <motion.div 
