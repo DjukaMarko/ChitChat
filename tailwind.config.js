@@ -89,7 +89,8 @@ export const plugins = [
       landingWaves: "#f8f8f8",
       backgroundTheme: "#ffffff",
       textColor: "#000000",
-      borderColor: "#757575"
+      borderColor: "#757575",
+      skeletonColor: "#dbdbdb"
     },
     dark: {
       primaryC: "#991b1b",
@@ -102,7 +103,8 @@ export const plugins = [
       landingWaves: "#2e2e2e",
       backgroundTheme: "#333333",
       textColor: "#ffffff",
-      borderColor:"#c2c2c2"
+      borderColor:"#c2c2c2",
+      skeletonColor: "#303030"
     }
   })
 ];

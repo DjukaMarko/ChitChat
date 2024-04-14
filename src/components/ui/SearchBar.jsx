@@ -1,32 +1,44 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { auth, db } from "@/config/firebase";
 import { and, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { SearchInput } from "./SearchInput";
 import { AnimatePresence, motion } from "framer-motion";
+import GridRandomFriends from "./GridRandomFriends";
+import SearchFriends from "./SearchFriends";
 
 export const SearchBar = ({ usersRef }) => {
 
+  const [isLoading, setLoading] = useState(true);
+  const [isSearchMenuOpened, setSearchMenuOpened] = useState(false);
   const [possibleRequests, setPossibleRequests] = useState([]);
   const [searchInput, setSearchInput] = useState("");
 
-  const handleSearchSubmit = async () => {
+  useEffect(() => {
+    if (searchInput === "") {
+      setSearchMenuOpened(false);
+      setPossibleRequests([]);
+    }
+  }, [searchInput]);
+
+  const handleSearchSubmit = async (str) => {
     try {
-        if (searchInput !== "") {
+        console.log(str)
+        if (str !== "") {
             const q = query(
                 usersRef,
                 and(
-                    where("username", ">=", searchInput.toLowerCase()),
-                    where("username", "<=", searchInput.toLowerCase() + "\uf8ff"),
+                    where("username", ">=", str.toLowerCase()),
+                    where("username", "<=", str.toLowerCase() + "\uf8ff"),
                     where("username", "!=", auth?.currentUser?.displayName.toLowerCase())
                 )
             );
             const listUsers = await getDocs(q);
             const requests = listUsers.docs.map((d) => {
                 const docSnap = d.data();
-                return docSnap.display_name;
+                return docSnap;
             });
-
             setPossibleRequests(requests);
+            setLoading(false);
         }
     } catch (e) {
         console.error(e);
@@ -70,55 +82,20 @@ export const SearchBar = ({ usersRef }) => {
   return (
     <>
       <div className="flex relative flex-col bg-secondaryC rounded-xl">
-        <SearchInput searchInput={searchInput} setSearchInput={setSearchInput} usersRef={usersRef} possibleRequests={possibleRequests} setPossibleRequests={v => setPossibleRequests(v)} handleSearchSubmit={handleSearchSubmit} />
+        <SearchInput setSearchMenuOpened={setSearchMenuOpened} searchInput={searchInput} setSearchInput={setSearchInput} usersRef={usersRef} possibleRequests={possibleRequests} setPossibleRequests={v => setPossibleRequests(v)} handleSearchSubmit={handleSearchSubmit} />
         <AnimatePresence>
-          {possibleRequests.length > 0 && (
+          {isSearchMenuOpened && (
             <motion.div 
               key="searchAnimation" 
-              initial={{ height: 0 }} 
-              animate={{ height: "16rem" }} 
-              exit={{ height: 0 }} 
+              initial={{ height: 0, opacity:0 }} 
+              animate={{ height: "16rem", opacity:1 }} 
+              exit={{ height: 0, opacity:0 }} 
               transition={{ duration: 0.2 }} 
               className="flex rounded-b-xl w-full max-h-64 border-t-[1px] border-secondaryCHover">
 
-              <div className="grow h-full grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 rounded-bl-lg border-r-[1px] border-secondaryCHover p-1 overflow-y-auto">
-                <div className="bg-secondaryCHover rounded-lg col-span-2 row-span-2"></div>
-                <div className="bg-secondaryCHover rounded-lg"></div>
-                <div className="bg-secondaryCHover rounded-lg"></div>
-                <div className="bg-secondaryCHover rounded-lg"></div>
-                <div className="bg-secondaryCHover rounded-lg"></div>
-                <div className="bg-secondaryCHover rounded-lg"></div>
-                <div className="bg-secondaryCHover rounded-lg"></div>
-                <div className="bg-secondaryCHover rounded-lg"></div>
-                <div className="bg-secondaryCHover rounded-lg"></div>
-              </div>
+              <GridRandomFriends handleSendRequest={handleSendRequest} />
+              <SearchFriends possibleRequests={possibleRequests} isLoading={isLoading} />
 
-              <div className="grow h-full rounded-br-lg flex flex-col space-y-1 p-1 overflow-y-scroll scrollbar-hide text-textColor text-sm">
-                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
-                  <p>Lorem Ipsum</p>
-                </div>
-                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
-                  <p>Lorem Ipsum</p>
-                </div>
-                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
-                  <p>Lorem Ipsum</p>
-                </div>
-                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
-                  <p>Lorem Ipsum</p>
-                </div>
-                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
-                  <p>Lorem Ipsum</p>
-                </div>
-                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
-                  <p>Lorem Ipsum</p>
-                </div>
-                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
-                  <p>Lorem Ipsum</p>
-                </div>
-                <div className="w-full min-h-[48px] bg-secondaryCHover p-2 rounded-lg">
-                  <p>Lorem Ipsum</p>
-                </div>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>

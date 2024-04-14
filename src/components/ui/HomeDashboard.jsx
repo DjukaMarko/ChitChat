@@ -373,13 +373,14 @@ export default function HomeDashboard({ cookies }) {
                     currentGroupId,
                     activeChatData,
                     deleteChat,
+                    usersRef
                 }}
             >
                 <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies, isSigningOut, handleSignOut }}  />
                 <PanelGroup direction="horizontal" className="w-full h-full flex">
                     <Panel
-                        defaultSize={width > 900 ? 40 : 50}
-                        minSize={width > 900 ? 40 : 50}
+                        defaultSize={45}
+                        minSize={width > 900 ? 45 : 50}
                         className={` ${isChatOpened ? "hidden md:block" : "block"} flex border-r-[1px] border-secondaryC relative w-full flex-col justify-between h-full`}>
                         <div className="relative flex flex-col w-full h-full">
                             <div className="relative w-full h-[calc(100dvh-3rem)] md:h-[calc(100dvh)] flex flex-col p-4 overflow-y-scroll scrollbar-hide">
