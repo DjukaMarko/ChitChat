@@ -14,7 +14,6 @@ export const SearchBar = ({ usersRef }) => {
   const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
-    // Define a function to update state after a delay
     const updateStateWithDelay = () => {
       if (searchInput === "") {
         setSearchMenuOpened(false);
@@ -22,16 +21,13 @@ export const SearchBar = ({ usersRef }) => {
       }
     };
 
-    // Set a timeout to delay state update by 1 second
     const timeoutId = setTimeout(updateStateWithDelay, 400);
 
-    // Clear timeout when component unmounts or when searchInput changes
     return () => clearTimeout(timeoutId);
   }, [searchInput]);
 
   const handleSearchSubmit = async (str) => {
     try {
-      console.log(str)
       if (str !== "") {
         const q = query(
           usersRef,

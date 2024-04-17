@@ -5,6 +5,7 @@ export default function SearchFriends({ possibleRequests, isLoading }) {
     return (
         <div className="w-[50%] md:w-[70%] h-full rounded-br-lg flex flex-col space-y-1 p-1 overflow-y-scroll scrollbar-hide text-textColor text-sm">
             {isLoading ? <SkeletonLoader /> :
+                possibleRequests.length === 0 ? <p className="text-center text-xs mt-4">No users found</p> :
                 possibleRequests?.map((r) => (
                     <div key={r.userId} className="w-full min-h-[48px] cursor-pointer bg-secondaryC hover:bg-secondaryCHover p-2 rounded-lg flex justify-center sm:justify-between items-center">
                         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 items-center">

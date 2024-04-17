@@ -1,9 +1,8 @@
-import { ThemeProvider } from "../misc/ThemeProvider";
 import { useContext, useEffect, useState } from "react";
 import { Skeleton } from "./skeleton";
 import { PageContext } from "../misc/PageContext";
-import { doc, getDoc, getDocs, limit, query, where } from "firebase/firestore";
-import { auth, db } from "@/config/firebase";
+import { getDocs, limit, query } from "firebase/firestore";
+import { auth } from "@/config/firebase";
 import { CirclePlus } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -19,13 +18,12 @@ export default function GridRandomFriends({ handleSendRequest }) {
 
             const documents = [];
             for (const docSnap of snapshot.docs) {
-                documents.push({ ...docSnap.data() });
-                if (docSnap.data().friends.includes(auth.currentUser.uid) && docSnap.data().userId !== auth.currentUser.uid) {
+                if (docSnap.data().friends.includes(auth.currentUser.uid) && !docSnap.data().userId !== auth.currentUser.uid) {
+                    documents.push({ ...docSnap.data() });
                 }
-            }//docSnap.data().friends.includes(auth.currentUser.uid) && docSnap.data().userId !== auth.currentUser.uid
+            }//!docSnap.data().friends.includes(auth.currentUser.uid) && docSnap.data().userId !== auth.currentUser.uid
 
             setData(documents);
-            console.log(documents)
             setLoading(false);
         }
 
@@ -36,6 +34,7 @@ export default function GridRandomFriends({ handleSendRequest }) {
             {isLoading ?
                 <SkeletonLoader /> :
                 <>
+                    {data.length === 0 && <p className="text-center text-xs mt-4">No users found</p>}
                     {data.map((item, index) => (
                         <div
                             onMouseEnter={() => setHoverIndex(index)}
@@ -59,20 +58,8 @@ export default function GridRandomFriends({ handleSendRequest }) {
         </div>
     )
 }
-/**
- <div className="bg-secondaryCHover rounded-lg col-span-2 row-span-2"></div>
-            <div className="bg-secondaryCHover rounded-lg"></div>
-            <div className="bg-secondaryCHover rounded-lg"></div>
-            <div className="bg-secondaryCHover rounded-lg"></div>
-            <div className="bg-secondaryCHover rounded-lg"></div>
-            <div className="bg-secondaryCHover rounded-lg"></div>
-            <div className="bg-secondaryCHover rounded-lg"></div>
-            <div className="bg-secondaryCHover rounded-lg"></div>
-            <div className="bg-secondaryCHover rounded-lg"></div>
- */
 
 const SkeletonLoader = () => {
-    const { themeMode } = useContext(ThemeProvider);
     return (
         <>
             <div className="bg-secondaryCHover rounded-lg col-span-2 row-span-2"><Skeleton className="bg-skeletonColor w-full h-full" /></div>

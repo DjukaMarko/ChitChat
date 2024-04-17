@@ -22,19 +22,20 @@ export const ChatMessage = ({ side, text, m, index, isMessageSending, currentMem
                     <p className={`text-xs text-textColor`}>{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1]) || ""}</p>
                 </div>
             )}
-
-            {side === 2 && (text[index + 1]?.sentBy !== otherMember?.userId && <img className="w-9 rounded-full mt-4 ml-2" src={otherMember?.photoUrl} />)}
-            <div className={`${(side === 1 ? (isMessageSending && index === 0 ? "bg-red-400" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ${side === 1 ? "mx-6" : "mx-10"}  py-2 px-4 rounded-xl relative max-w-[70%] break-words cursor-pointer`}>
-                {isValidUrl(m.message) ? (
-                    <a href={m.message.startsWith("http") ? m.message : `https://${m.message}`} className={`${side === 1 ? "text-white" : "text-black"} underline text-xs md:text-sm`} target="_blank" rel="noopener noreferrer">
-                        {m.message}
-                    </a>
-                ) : (
-                    <p className={`${side === 1 ? "text-white" : "text-textColor"} text-sm`}>{m.message}</p>
-                )}
-                {isMessageSending && index === 0 &&
-                    <div className={`absolute -bottom-6 right-0`}><BeatLoader size={8} color="#c91e1e" /></div>
-                }
+            <div className={` ${side === 1 ? "mr-6" : "ml-6 flex items-center space-x-3"} max-w-[70%]`}>
+                {side === 2 && (text[index + 1]?.sentBy !== otherMember?.userId && <img className="w-9 rounded-full" src={otherMember?.photoUrl} />)}
+                <div className={`${(side === 1 ? (isMessageSending && index === 0 ? "bg-red-400" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ml-[3rem] py-[7px] px-3 rounded-lg break-words cursor-pointer relative`}>
+                    {isValidUrl(m.message) ? (
+                        <a href={m.message.startsWith("http") ? m.message : `https://${m.message}`} className={`${side === 1 ? "text-white" : "text-black"} underline text-xs md:text-sm`} target="_blank" rel="noopener noreferrer">
+                            {m.message}
+                        </a>
+                    ) : (
+                        <p className={`${side === 1 ? "text-white" : "text-textColor"} text-sm`}>{m.message}</p>
+                    )}
+                    {isMessageSending && index === 0 &&
+                        <div className={`absolute -bottom-6 right-0`}><BeatLoader size={8} color="#c91e1e" /></div>
+                    }
+                </div>
             </div>
         </div>
     )
