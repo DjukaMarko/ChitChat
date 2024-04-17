@@ -16,7 +16,7 @@ export const ChatMessage = ({ side, text, m, index, isMessageSending, currentMem
 
     return (
         <div className={`flex flex-col ${side === 1 ? "items-end" : "items-start"} mt-1`}>
-            {/* Otherwise, show the time difference between the current message and the next message */}
+            {/* show the time difference between the current message and the next message */}
             {isDifference(m, text[index === text.length - 1 ? index : index + 1], text.length, index) && (
                 <div className={`w-full flex justify-center my-3`}>
                     <p className={`text-xs text-textColor`}>{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1]) || ""}</p>

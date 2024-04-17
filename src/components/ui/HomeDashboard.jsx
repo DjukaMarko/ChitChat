@@ -384,7 +384,7 @@ export default function HomeDashboard({ cookies }) {
                         minSize={width > 900 ? 45 : 50}
                         className={` ${isChatOpened ? "hidden md:block" : "block"} flex border-r-[1px] border-secondaryC relative w-full flex-col justify-between h-full`}>
                         <div className="relative flex flex-col w-full h-full">
-                            <div className="relative w-full h-[calc(100dvh-3rem)] md:h-[calc(100dvh)] flex flex-col p-4 overflow-y-scroll scrollbar-hide">
+                            <div className="relative w-full h-[calc(100dvh-3rem)] md:h-[calc(100dvh)] flex flex-col p-3 overflow-y-scroll scrollbar-hide">
                                 {isChatSidebarLoading
                                     ?
                                     <SkeletonLoader />

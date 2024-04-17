@@ -153,9 +153,9 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         
         if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-            setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
         }
-
+        
+        setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
 
         await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
             groups: arrayUnion(currentGroupId),
