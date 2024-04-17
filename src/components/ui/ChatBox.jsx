@@ -150,12 +150,14 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
     const sendMessage = async () => {
         if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
         setMessageSending(true);
-        setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
-
-
+        
         if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
+
+        setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
+
+
 
         await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
             groups: arrayUnion(currentGroupId),
