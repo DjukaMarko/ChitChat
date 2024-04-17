@@ -310,7 +310,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                         return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} text={text} m={m} index={index} isMessageSending={isMessageSending} />
                     })}
                     <div className={`w-full flex justify-center`}>
-                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (
+                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && text.length > 0 && (
                             <div className="flex flex-col items-center justify-center p-6">
                                 <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
                                 <p className="text-sm md:text-md text-center text-textColor">Welcome to the conversation! Write something down to start the convo.</p>
