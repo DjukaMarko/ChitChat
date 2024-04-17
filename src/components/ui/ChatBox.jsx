@@ -137,7 +137,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         });
 
         return () => unsubscribe();
-    }, [currentGroupId, loadMoreDocs]);
+    }, [currentGroupId, loadMoreDocs, chatLength]);
 
 
 
