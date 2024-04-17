@@ -53,6 +53,19 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         }
 
         setGroupData();
+
+        let fetchMembers = async () => {
+            if (currentGroupId) {
+                let q = query(collection(db, "groups"), where("id", "==", currentGroupId));
+                let groupData = await getDocs(q);
+
+                groupData.docs[0].data().members.map(async (m) => {
+                    let userData = await getDocs(query(collection(db, "users"), where("userId", "==", m)));
+                    setMembers(prevMember => [...prevMember, userData.docs[0].data()]);
+                })
+            }
+        }
+        fetchMembers();
     }, [currentGroupId]);
 
     useEffect(() => {
@@ -110,21 +123,8 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
 
     useEffect(() => {
         setMessageLoading(true);
-        let fetchMembers = async () => {
-            if (currentGroupId) {
-                let q = query(collection(db, "groups"), where("id", "==", currentGroupId));
-                let groupData = await getDocs(q);
-
-                groupData.docs[0].data().members.map(async (m) => {
-                    let userData = await getDocs(query(collection(db, "users"), where("userId", "==", m)));
-                    setMembers(prevMember => [...prevMember, userData.docs[0].data()]);
-                })
-            }
-        }
-
         if (currentGroupId === "") return;
         let threshold = (loadMoreDocs * 20);
-        fetchMembers();
 
         const subcollectionRef = collection(doc(db, "groups", currentGroupId), "messages");
         const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(threshold));
@@ -137,7 +137,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         });
 
         return () => unsubscribe();
-    }, [currentGroupId, loadMoreDocs, chatLength]);
+    }, [currentGroupId, loadMoreDocs]);
 
 
 
