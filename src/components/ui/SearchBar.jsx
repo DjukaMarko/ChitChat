@@ -38,10 +38,17 @@ export const SearchBar = ({ usersRef }) => {
           )
         );
         const listUsers = await getDocs(q);
-        const requests = listUsers.docs.map((d) => {
+        let myData = (await getDoc(doc(db, "users", auth?.currentUser?.uid))).data();
+        const myuserFriendsIds = myData.friends;
+
+        const filteredRequests = listUsers.docs.filter((d) => {
           const docSnap = d.data();
-          return docSnap;
+          if(!myuserFriendsIds.includes(docSnap.userId)) {
+            return docSnap;
+          }
         });
+
+        const requests = filteredRequests.map((d) => d.data());
         setPossibleRequests(requests);
         setLoading(false);
       }
@@ -99,7 +106,7 @@ export const SearchBar = ({ usersRef }) => {
               className="flex rounded-b-xl w-full max-h-64 border-t-[1px] border-secondaryCHover">
 
               <GridRandomFriends handleSendRequest={handleSendRequest} />
-              <SearchFriends possibleRequests={possibleRequests} isLoading={isLoading} />
+              <SearchFriends handleSendRequest={handleSendRequest} possibleRequests={possibleRequests} isLoading={isLoading} />
 
             </motion.div>
           )}

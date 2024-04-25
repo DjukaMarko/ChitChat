@@ -1,7 +1,7 @@
 import { CirclePlus } from "lucide-react";
 import { Skeleton } from "./skeleton";
 
-export default function SearchFriends({ possibleRequests, isLoading }) {
+export default function SearchFriends({ handleSendRequest, possibleRequests, isLoading }) {
     return (
         <div className="w-[50%] md:w-[70%] h-full rounded-br-lg flex flex-col space-y-1 p-1 overflow-y-scroll scrollbar-hide text-textColor text-sm">
             {isLoading ? <SkeletonLoader /> :
@@ -12,7 +12,10 @@ export default function SearchFriends({ possibleRequests, isLoading }) {
                             <img src={r.photoUrl} className="w-8 sm:w-12 rounded-lg" />
                             <p className="text-xs sm:text-sm text-textColor">{r.display_name}</p>
                         </div>
-                        <CirclePlus size={22} className="hidden sm:block" />
+                        <button onClick={(event) => {
+                            handleSendRequest(r.display_name)
+                            event.currentTarget.disabled = true;
+                        }} className="hidden sm:block disabled:cursor-not-allowed disabled:opacity-50"><CirclePlus size={22} /></button>
                     </div>
                 ))
             }

@@ -4,24 +4,24 @@ import { auth, db, real_db } from "@/config/firebase";
 import emptycart from "@/../public/landing404illustration.svg"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  query,
-  updateDoc,
-  where,
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    onSnapshot,
+    query,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import {
-  ref,
-  onDisconnect,
-  update,
-  serverTimestamp,
-  onValue,
+    ref,
+    onDisconnect,
+    update,
+    serverTimestamp,
+    onValue,
 } from "firebase/database";
 import { ChatBox } from "./ChatBox";
 import { SkeletonLoader } from "./SkeletonLoader";
@@ -62,55 +62,8 @@ export default function HomeDashboard({ cookies }) {
     };
 
     useEffect(() => {
-        const fetchGroups = async () => {
-            if (!myUserData || typeof myUserData.groups === "undefined") return;
-            if (myUserData.groups.length === 0) setChatSidebarLoading(false);
-
-            let snapshots_to_unmount = [];
-
-            await Promise.all(myUserData.groups.filter(group => group.length > 0).map(async group => {
-                const unsubscribe = onSnapshot(doc(db, "groups", group), async snapshot => {
-                    const membersData = await Promise.all(snapshot.data().members.filter(member => member !== myUserData.userId).map(async member => {
-                        let memberData = await getDoc(doc(db, "users", member));
-                        return memberData.data();
-                    }));
-
-                    let groupData = {
-                        ...snapshot.data(),
-                        members: membersData,
-                    };
-
-                    setMyGroups((prev) => {
-                        const updatedGroups = [groupData, ...prev.filter((prevGroup) => prevGroup.id !== groupData.id)];
-                        updatedGroups.sort((a, b) => b?.lastMessageSent?.seconds - a?.lastMessageSent?.seconds)
-                        return updatedGroups;
-                    });
-                });
-
-                snapshots_to_unmount.push(unsubscribe);
-            }));
-            return () => {
-                snapshots_to_unmount.forEach(unsub => {
-                    unsub();
-                })
-            }
-        }
-
-        fetchGroups();
-    }, [myUserData]);
-
-
-    useEffect(() => {
-        if (myGroups.length > 0) setChatSidebarLoading(false);
-    }, [myGroups]);
-
-
-
-
-
-    useEffect(() => {
+        let snapshots_to_unmount = [];
         const fetch = async () => {
-            let snapshots_to_unmount = [];
             const unsubscribe = onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     const unsubscribe_user_snapshot = onSnapshot(doc(db, "users", auth?.currentUser?.uid), async snapshot => {
@@ -165,15 +118,65 @@ export default function HomeDashboard({ cookies }) {
             });
 
             snapshots_to_unmount.push(unsubscribe);
-            return () => {
-                snapshots_to_unmount.forEach(unsubscribe => {
-                    unsubscribe();
-                });
-            };
         };
 
         fetch();
+        return () => {
+            if (snapshots_to_unmount.length > 0) {
+                snapshots_to_unmount.forEach(unsubscribe => {
+                    unsubscribe();
+                });
+            }
+        };
     }, []);
+
+    useEffect(() => {
+        let snapshots_to_unmount = [];
+
+        const fetchGroups = async () => {
+            if (!myUserData || typeof myUserData.groups === "undefined") return;
+            if (myUserData.groups.length === 0) setChatSidebarLoading(false);
+
+            await Promise.all(myUserData.groups.filter(group => group.length > 0).map(async group => {
+                const unsubscribe = onSnapshot(doc(db, "groups", group), async snapshot => {
+                    const membersData = await Promise.all(snapshot.data().members.filter(member => member !== myUserData.userId).map(async member => {
+                        let memberData = await getDoc(doc(db, "users", member));
+                        return memberData.data();
+                    }));
+
+                    let groupData = {
+                        ...snapshot.data(),
+                        members: membersData,
+                    };
+
+                    setMyGroups((prev) => {
+                        const updatedGroups = [groupData, ...prev.filter((prevGroup) => (prevGroup.id !== groupData.id))];
+                        updatedGroups.sort((a, b) => b?.lastMessageSent?.seconds - a?.lastMessageSent?.seconds)
+                        return updatedGroups;
+                    });
+
+                });
+
+                snapshots_to_unmount.push(unsubscribe);
+            }));
+            setMyGroups(prev => prev.filter(prevVal => myUserData.groups.includes(prevVal.id)))
+        }
+
+        fetchGroups();
+        return () => {
+            if (snapshots_to_unmount.length > 0) {
+                snapshots_to_unmount.forEach(unsub => {
+                    unsub();
+                })
+            }
+        }
+    }, [myUserData]);
+
+
+    useEffect(() => {
+        if (myGroups.length > 0) setChatSidebarLoading(false);
+    }, [myGroups]);
+
 
     const handleReject = async (r) => {
         try {
@@ -321,8 +324,7 @@ export default function HomeDashboard({ cookies }) {
     const deleteChat = async (id) => {
         hideChat();
         let newGroups = myUserData.groups.filter(item => item !== id);
-        setMyGroups(prevGroups => prevGroups.filter(group => group.id !== id));
-        await updateDoc(doc(db, "users", myUserData.userId), {
+        await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
             groups: newGroups,
         })
     }
@@ -377,7 +379,7 @@ export default function HomeDashboard({ cookies }) {
                     usersRef
                 }}
             >
-                <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies, isSigningOut, handleSignOut }}  />
+                <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies, isSigningOut, handleSignOut }} />
                 <PanelGroup direction="horizontal" className="w-full h-full flex">
                     <Panel
                         defaultSize={45}
@@ -407,8 +409,8 @@ export default function HomeDashboard({ cookies }) {
                                 }
                             </div>
                             <div className="bg-backgroundTheme w-full h-[3rem] md:hidden border-t-[1px] border-secondaryC flex z-[5]">
-                                <div onClick={() => setSelectedSidebar(1)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 1 && !isSigningOut && "bg-secondaryCHover border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}><MessageSquareHeart size={20} color={selectedSidebar === 1 ? "#991b1b" :  themeMode === "dark" ? "#ffffff" : "#000000"} /></div>
-                                <div onClick={() => setSelectedSidebar(2)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 2 && !isSigningOut && "bg-secondaryC border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}><BookUser size={20} color={selectedSidebar === 2 ? "#991b1b" :  themeMode === "dark" ? "#ffffff" : "#000000"} /></div>
+                                <div onClick={() => setSelectedSidebar(1)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 1 && !isSigningOut && "bg-secondaryCHover border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}><MessageSquareHeart size={20} color={selectedSidebar === 1 ? "#991b1b" : themeMode === "dark" ? "#ffffff" : "#000000"} /></div>
+                                <div onClick={() => setSelectedSidebar(2)} className={`flex justify-center items-center h-full grow ${selectedSidebar === 2 && !isSigningOut && "bg-secondaryC border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}><BookUser size={20} color={selectedSidebar === 2 ? "#991b1b" : themeMode === "dark" ? "#ffffff" : "#000000"} /></div>
                                 <div onClick={handleSignOut} className={`flex justify-center items-center h-full grow ${isSigningOut && "bg-secondaryC border-t-[2px] border-red-800"} hover:bg-secondaryCHover p-3`}>{isSigningOut ? <BeatLoader size={4} color="#991b1b" /> : <LogOut size={20} color={themeMode === "dark" ? "#ffffff" : "#000000"} />} </div>
                             </div>
                         </div>
@@ -421,7 +423,7 @@ export default function HomeDashboard({ cookies }) {
                     <Panel minSize={35} className={`w-full h-full ${(!isChatOpened && "hidden md:flex justify-center items-center")}`}>
 
                         <AnimatePresence>
-                            {isChatOpened && (
+                            {isChatOpened && currentGroupId && (
                                 <ChatBox
                                     memberListWindow={memberListWindow}
                                     setMemberListWindow={(v) => setMemberListWindow(v)}

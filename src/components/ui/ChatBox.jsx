@@ -42,18 +42,12 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
 
     const scrollContainerRef = useRef();
     useEffect(() => {
-
-        if (!currentGroupId) return;
-
-        setLoadMoreDocs(1);
+        if(!currentGroupId) return;
         setText([]);
         let setGroupData = async () => {
             let fetchData = await getDoc(doc(db, "groups", currentGroupId));
             setChatLength(fetchData.data().numMessages || 0);
         }
-
-        setGroupData();
-
         let fetchMembers = async () => {
             if (currentGroupId) {
                 let q = query(collection(db, "groups"), where("id", "==", currentGroupId));
@@ -65,7 +59,13 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                 })
             }
         }
-        fetchMembers();
+        let callFunc = async () => {
+            await setGroupData();
+            await fetchMembers();
+            setLoadMoreDocs(1);
+        }
+
+        callFunc();
     }, [currentGroupId]);
 
     useEffect(() => {
@@ -122,8 +122,8 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
     }, [activeChatData]);
 
     useEffect(() => {
+        if(!currentGroupId) return;
         setMessageLoading(true);
-        if (currentGroupId === "") return;
         let threshold = (loadMoreDocs * 20);
 
         const subcollectionRef = collection(doc(db, "groups", currentGroupId), "messages");
@@ -149,6 +149,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
 
     const sendMessage = async () => {
         if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
+        if(!currentGroupId) return;
         setMessageSending(true);
         
         if (scrollContainerRef.current) {
@@ -160,7 +161,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
             groups: arrayUnion(currentGroupId),
         })
-
+        console.log(activeChatData);
         await Promise.all(activeChatData.map(async item => {
             try {
                 const otherUser = await getDocs(query(
@@ -310,7 +311,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                         return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} text={text} m={m} index={index} isMessageSending={isMessageSending} />
                     })}
                     <div className={`w-full flex justify-center`}>
-                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && text.length > 0 && (
+                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (
                             <div className="flex flex-col items-center justify-center p-6">
                                 <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
                                 <p className="text-sm md:text-md text-center text-textColor">Welcome to the conversation! Write something down to start the convo.</p>
@@ -339,7 +340,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
 }
 
 const ModalList = () => {
-    const { myUserData, setMemberListWindow, activeChatData } = useContext(PageContext);
+    const { myUserData, setMemberListWindow, activeChatData, currentGroupId } = useContext(PageContext);
 
     const handleAddMember = async (item, index) => {
         if (!item || item.userId === undefined) return;
@@ -350,7 +351,7 @@ const ModalList = () => {
         await updateDoc(doc(db, "users", item.userId), {
             groups: arrayUnion(currentGroupId),
         })
-
+        console.log("Added member:" + item.userId);
     }
 
     let checkIfExists = (item, index) => {
