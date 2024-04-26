@@ -69,12 +69,12 @@ export default function HomeDashboard({ cookies }) {
                     const unsubscribe_user_snapshot = onSnapshot(doc(db, "users", auth?.currentUser?.uid), async snapshot => {
                         const friendsData = await Promise.all(snapshot.data().friends.map(async (friendId) => {
                             const friendSnapshot = await getDoc(doc(db, "users", friendId));
-                            return friendSnapshot?.data();
+                            return friendSnapshot.data();
                         }));
 
                         const requestsData = await Promise.all(snapshot.data().f_requests.map(async (request_id) => {
                             const friendSnapshot = await getDoc(doc(db, "users", request_id));
-                            return friendSnapshot?.data();
+                            return friendSnapshot.data();
                         }));
 
                         setMyUserData({
@@ -85,7 +85,7 @@ export default function HomeDashboard({ cookies }) {
 
                     });
                     snapshots_to_unmount.push(unsubscribe_user_snapshot);
-                    var uid = auth?.currentUser?.uid;
+                    var uid = auth.currentUser.uid;
                     // Create a reference to this user's specific status node.
                     var userStatusDatabaseRef = ref(real_db, "/status/" + uid);
 
@@ -297,8 +297,6 @@ export default function HomeDashboard({ cookies }) {
     };
 
     const handleChat = async (username) => {
-        setChatOpen(true);
-
         const [other_user, commonGroups] = await getGroup(username);
 
         if (commonGroups.length == 0) {
@@ -319,6 +317,7 @@ export default function HomeDashboard({ cookies }) {
         } else {
             setCurrentGroupId(commonGroups[0].data().id);
         }
+        setChatOpen(true);
     }
 
     const deleteChat = async (id) => {
@@ -433,7 +432,7 @@ export default function HomeDashboard({ cookies }) {
                         </AnimatePresence>
 
                         <AnimatePresence>
-                            {!isChatOpened && (
+                            {!isChatOpened && !currentGroupId && (
                                 <EmptyChatWindow />
                             )}
                         </AnimatePresence>
@@ -452,7 +451,7 @@ const EmptyChatWindow = () => {
             initial={{ x: 100 }}
             animate={{ x: 0 }}
             exit={{ x: -100 }}
-            transition={{ duration: 0.1 }} className="flex flex-col justify-center items-center space-y-6">
+            transition={{ duration: 0.1 }} className="w-full h-full flex flex-col justify-center items-center space-y-6">
             <img src={emptycart} className="w-32 sm:w-64" />
             <div className="flex flex-col justify-center items-center text-sm text-textColor">
                 <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>

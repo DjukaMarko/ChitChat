@@ -34,7 +34,6 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
     const [textValue, setTextValue] = useState("");
     const [fileUploadInput, setFileUploadInput] = useState("");
     const [isMessageSending, setMessageSending] = useState(false);
-    const [currentMembers, setMembers] = useState([]);
     const [isMessageLoading, setMessageLoading] = useState(true);
     const [chatLength, setChatLength] = useState(0);
     const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
@@ -48,20 +47,8 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
             let fetchData = await getDoc(doc(db, "groups", currentGroupId));
             setChatLength(fetchData.data().numMessages || 0);
         }
-        let fetchMembers = async () => {
-            if (currentGroupId) {
-                let q = query(collection(db, "groups"), where("id", "==", currentGroupId));
-                let groupData = await getDocs(q);
-
-                groupData.docs[0].data().members.map(async (m) => {
-                    let userData = await getDocs(query(collection(db, "users"), where("userId", "==", m)));
-                    setMembers(prevMember => [...prevMember, userData.docs[0].data()]);
-                })
-            }
-        }
         let callFunc = async () => {
             await setGroupData();
-            await fetchMembers();
             setLoadMoreDocs(1);
         }
 
@@ -137,9 +124,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         });
 
         return () => unsubscribe();
-    }, [currentGroupId, loadMoreDocs, chatLength]);
-
-
+    }, [currentGroupId, loadMoreDocs]);
 
 
     const buttonSendClick = async (e) => {
@@ -161,7 +146,6 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
             groups: arrayUnion(currentGroupId),
         })
-        console.log(activeChatData);
         await Promise.all(activeChatData.map(async item => {
             try {
                 const otherUser = await getDocs(query(
@@ -202,7 +186,6 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         setMessageSending(false);
 
     }
-
 
     const addText = (e) => {
         setTextValue(e.target.value);
@@ -307,11 +290,11 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
                     className="w-full h-[calc(100dvh)] overflow-y-scroll scrollbar-hide flex flex-col-reverse py-6">
-                    {currentMembers.length > 0 && text.map((m, index) => {
-                        return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} currentMembers={currentMembers} text={text} m={m} index={index} isMessageSending={isMessageSending} />
+                    {activeChatData.length > 0 && text.map((m, index) => {
+                        return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} text={text} m={m} index={index} isMessageSending={isMessageSending} />
                     })}
                     <div className={`w-full flex justify-center`}>
-                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (
+                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && text.length > 0 && (
                             <div className="flex flex-col items-center justify-center p-6">
                                 <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
                                 <p className="text-sm md:text-md text-center text-textColor">Welcome to the conversation! Write something down to start the convo.</p>
