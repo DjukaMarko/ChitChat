@@ -35,7 +35,7 @@ export default function GridRandomFriends({ handleSendRequest }) {
                 <SkeletonLoader /> :
                 <>
                     {data.length === 0 && <p className="text-center text-xs mt-4">No users found</p>}
-                    {data.map((item, index) => (
+                    {data?.map((item, index) => (
                         <div
                             onMouseEnter={() => setHoverIndex(index)}
                             onMouseLeave={() => setHoverIndex(null)}

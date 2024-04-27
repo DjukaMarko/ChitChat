@@ -21,7 +21,7 @@ export const ChatHistory = ({ isSelected, item, index, handleClick }) => {
                     }</p>
                     <div className="inline-flex space-x-2 items-center text-secondOrderText">
                         <div className="inline-flex space-x-1">
-                            {item.lastMessageSentBy === auth?.currentUser?.uid && (
+                            {item?.lastMessageSentBy === auth?.currentUser?.uid && (
                                 <p className="text-xs md:text-sm">You:</p>
                             )}
                             <p className="text-xs md:text-sm">{item.lastMessage.length > 15 ? item.lastMessage.slice(0, 15) + "..." : item.lastMessage}</p>

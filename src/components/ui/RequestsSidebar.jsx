@@ -23,7 +23,7 @@ export const RequestsSidebar = ({ acceptRequest, removeRequest }) => {
                 </div>
             </div>
             <div className="w-full h-full overflow-y-scroll scrollbar-hide">
-                {myUserData.f_requests.length == 0 ?
+                {myUserData?.f_requests?.length == 0 ?
 
                     <div className="w-full h-full flex justify-center items-center">
                         <div className="flex flex-col space-y-4 items-center justify-center">
@@ -33,7 +33,7 @@ export const RequestsSidebar = ({ acceptRequest, removeRequest }) => {
                     </div>
                     :
                     <div className="w-full h-screen-safe flex flex-col space-y-4 overflow-y-auto">
-                        {myUserData.f_requests.map(e => {
+                        {myUserData?.f_requests?.map(e => {
                             return (
                                 <div key={e} className="w-full flex items-center justify-between p-4 rounded-full border-[1px] border-secondaryC shadow-sm">
                                     <div className="flex space-x-4 items-center">

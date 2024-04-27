@@ -136,9 +136,9 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
 
-        setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
+        setText(prevText => [{ sentBy: auth.currentUser.uid, message: textValue }, ...prevText]);
 
-        await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
             groups: arrayUnion(activeChatData.id),
         })
         await Promise.all(members.map(async item => {
@@ -163,7 +163,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         await updateDoc(doc(db, "groups", activeChatData.id), {
             lastMessage: textValue,
             lastMessageSent: firestoreTimestamp(),
-            lastMessageSentBy: auth?.currentUser?.uid,
+            lastMessageSentBy: auth.currentUser.uid,
             numMessages: increment(1),
         })
 
@@ -173,7 +173,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         addDoc(messageRef, {
             message: textValue,
             sentAt: firestoreTimestamp(),
-            sentBy: auth?.currentUser?.uid
+            sentBy: auth.currentUser.uid
         });
 
         setTextValue("");
@@ -201,7 +201,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
     };
 
     const leaveGroup = async () => {
-        let myData = await getDoc(doc(db, "users", auth?.currentUser?.uid));
+        let myData = await getDoc(doc(db, "users", auth.currentUser.uid));
         let newMembers = members.filter(el => el.userId !== myData.data().userId).map(el => el.userId);
         await updateDoc(doc(db, "groups", activeChatData.id), {
             members: newMembers,
@@ -291,7 +291,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                     onScroll={handleScroll}
                     className="w-full h-[calc(100dvh)] overflow-y-scroll scrollbar-hide flex flex-col-reverse py-6">
                     {members.length > 0 && text.map((m, index) => {
-                        return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} text={text} m={m} index={index} isMessageSending={isMessageSending} />
+                        return <ChatMessage key={index} side={m.sentBy == auth.currentUser.uid ? 1 : 2} text={text} m={m} index={index} isMessageSending={isMessageSending} />
                     })}
                     <div className={`w-full flex justify-center`}>
                         {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (

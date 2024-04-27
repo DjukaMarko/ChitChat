@@ -115,32 +115,3 @@ export const SearchBar = ({ usersRef }) => {
     </>
   )
 }
-
-
-
-
-/*
-{possibleRequests.length > 0 && (
-          <div className="z-[1] rounded-b-xl w-full h-32 flex flex-col overflow-y-scroll p-4">
-            {possibleRequests?.map((r) => {
-              if (r !== auth?.currentUser?.displayName) {
-                return (
-                  <div key={r} className="flex items-center space-x-6">
-                    <p className="text-textColor">{r}</p>
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={() => handleSendRequest(r)}
-                        className="w-24 text-sm h-8 rounded-sm bg-green-500 hover:bg-green-400"
-                      >
-                        Add Friend
-                      </button>
-                    </div>
-                  </div>
-                );
-              }
-            })}
-          </div>
-        )}
-
-
-*/

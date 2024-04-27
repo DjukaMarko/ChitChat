@@ -65,7 +65,7 @@ export default function HomeDashboard({ cookies }) {
         const fetch = async () => {
             const unsubscribe = onAuthStateChanged(auth, async (user) => {
                 if (user) {
-                    const unsubscribe_user_snapshot = onSnapshot(doc(db, "users", auth?.currentUser?.uid), async snapshot => {
+                    const unsubscribe_user_snapshot = onSnapshot(doc(db, "users", auth.currentUser.uid), async snapshot => {
                         const friendsData = await Promise.all(snapshot.data().friends.map(async (friendId) => {
                             const friendSnapshot = await getDoc(doc(db, "users", friendId));
                             return friendSnapshot.data();
@@ -311,10 +311,8 @@ export default function HomeDashboard({ cookies }) {
             const newDocId = newDocRef.id;
             // Update the document with the actual ID
             await updateDoc(newDocRef, { id: newDocId });
-
             const docSnapshot = await getDoc(newDocRef);
 
-            console.log(docSnapshot.data())
             dataToSave = { ...docSnapshot.data(), members: [other_user.docs[0].data()] };
         } else {
             dataToSave = { ...commonGroups[0].data(), members: [other_user.docs[0].data()] };
