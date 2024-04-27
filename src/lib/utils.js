@@ -34,6 +34,10 @@ export const compareTimestamps = (obj1, obj2) => {
   const timestamp2 = moment.unix(obj2?.sentAt?.seconds);
   const now = moment();
 
+  if (isNaN(Date.parse(timestamp1)) || isNaN(Date.parse(timestamp2))) {
+    return false;
+}
+
   // Get the object with the latest timestamp
   const latestObject = timestamp1.isAfter(timestamp2) ? obj1 : obj2;
   const latestTimestamp = moment.unix(latestObject?.sentAt?.seconds);
@@ -52,26 +56,6 @@ export const compareTimestamps = (obj1, obj2) => {
 
   // Return the whole date
   return latestTimestamp.format("MMM DD, h:mm A");
-}
-
-export const returnTimestampFirstMessage = (obj1) => {
-  const timestamp = moment.unix(obj1?.sentAt?.seconds);
-  const now = moment();
-
-  // Check if the timestamp is today
-  if (timestamp.isSame(now, 'day')) {
-      // Return hours and minutes
-      return timestamp.format("h:mm A");
-  }
-
-  // Check if the timestamp is yesterday
-  if (timestamp.isSame(now.clone().subtract(1, 'day'), 'day')) {
-      // Return 'Yesterday' with hours and minutes
-      return "Yesterday, " + timestamp.format("h:mm A");
-  }
-
-  // Return the whole date
-  return timestamp.format("MMM DD, h:mm A");
 }
 
 export const isDifference = (obj1, obj2, textLength, index) => {

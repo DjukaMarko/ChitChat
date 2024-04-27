@@ -24,10 +24,14 @@ import { Button } from "./button";
 import WarningModalPrint from "./WarningModalPrint";
 import { hasOnlyBlankSpaces } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
+import ShortUniqueId from "short-unique-id";
 
 
 export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => {
-    const { activeChatData, deleteChat, currentGroupId } = useContext(PageContext);
+    
+    const { activeChatData, deleteChat } = useContext(PageContext);
+    if(Object.keys(activeChatData).length === 0) return;
+
     const { themeMode } = useContext(ThemeProvider);
     const [loadMoreDocs, setLoadMoreDocs] = useState(1);
     const [text, setText] = useState([]);
@@ -35,25 +39,19 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
     const [fileUploadInput, setFileUploadInput] = useState("");
     const [isMessageSending, setMessageSending] = useState(false);
     const [isMessageLoading, setMessageLoading] = useState(true);
-    const [chatLength, setChatLength] = useState(0);
     const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
     const [isDeletingChatLoading, setIsDeletingChatLoading] = useState(false);
 
-    const scrollContainerRef = useRef();
-    useEffect(() => {
-        if(!currentGroupId) return;
-        setText([]);
-        let setGroupData = async () => {
-            let fetchData = await getDoc(doc(db, "groups", currentGroupId));
-            setChatLength(fetchData.data().numMessages || 0);
-        }
-        let callFunc = async () => {
-            await setGroupData();
-            setLoadMoreDocs(1);
-        }
+    const isGroup = activeChatData.members.length > 1;
+    const members = activeChatData.members;
+    const chatLength = activeChatData.numMessages;
 
-        callFunc();
-    }, [currentGroupId]);
+    const scrollContainerRef = useRef();
+
+    useEffect(() => {
+        setText([]);
+        setLoadMoreDocs(1);
+    }, [activeChatData]);
 
     useEffect(() => {
         if (fileUploadInput === "") return;
@@ -68,7 +66,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         const file = event.target.files[0];
         if (!file) return;
 
-        const storageRef = ref(storage, `${currentGroupId}/${file.name}`);
+        const storageRef = ref(storage, `${activeChatData.id}/${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
         uploadTask.on("state_changed",
@@ -109,11 +107,10 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
     }, [activeChatData]);
 
     useEffect(() => {
-        if(!currentGroupId) return;
         setMessageLoading(true);
         let threshold = (loadMoreDocs * 20);
 
-        const subcollectionRef = collection(doc(db, "groups", currentGroupId), "messages");
+        const subcollectionRef = collection(doc(db, "groups", activeChatData.id), "messages");
         const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(threshold));
         const unsubscribe = onSnapshot(orderedQuery, (querySnapshot) => {
             setText([]);
@@ -124,7 +121,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         });
 
         return () => unsubscribe();
-    }, [currentGroupId, loadMoreDocs]);
+    }, [activeChatData, loadMoreDocs]);
 
 
     const buttonSendClick = async (e) => {
@@ -134,19 +131,17 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
 
     const sendMessage = async () => {
         if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
-        if(!currentGroupId) return;
         setMessageSending(true);
-        
         if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
-        
+
         setText(prevText => [{ sentBy: auth?.currentUser?.uid, message: textValue }, ...prevText]);
 
         await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
-            groups: arrayUnion(currentGroupId),
+            groups: arrayUnion(activeChatData.id),
         })
-        await Promise.all(activeChatData.map(async item => {
+        await Promise.all(members.map(async item => {
             try {
                 const otherUser = await getDocs(query(
                     collection(db, "users"),
@@ -154,9 +149,9 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                 ));
 
                 if (otherUser.docs.length > 0) {
-                    if (otherUser.docs[0].data().groups.indexOf(currentGroupId) === -1) {
+                    if (otherUser.docs[0].data().groups.indexOf(activeChatData.id) === -1) {
                         await updateDoc(doc(db, "users", otherUser.docs[0].data().userId), {
-                            groups: arrayUnion(currentGroupId)
+                            groups: arrayUnion(activeChatData.id)
                         })
                     }
                 }
@@ -165,7 +160,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
             }
         }));
 
-        await updateDoc(doc(db, "groups", currentGroupId), {
+        await updateDoc(doc(db, "groups", activeChatData.id), {
             lastMessage: textValue,
             lastMessageSent: firestoreTimestamp(),
             lastMessageSentBy: auth?.currentUser?.uid,
@@ -173,7 +168,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         })
 
 
-        const messageRef = collection(doc(db, "groups", currentGroupId), "messages");
+        const messageRef = collection(doc(db, "groups", activeChatData.id), "messages");
 
         addDoc(messageRef, {
             message: textValue,
@@ -206,19 +201,17 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
     };
 
     const leaveGroup = async () => {
-        let groupData = await getDoc(doc(db, "groups", currentGroupId));
         let myData = await getDoc(doc(db, "users", auth?.currentUser?.uid));
-        let newMembers = groupData.data().members.filter(el => el !== myData.data().userId);
-        await updateDoc(doc(db, "groups", currentGroupId), {
+        let newMembers = members.filter(el => el.userId !== myData.data().userId).map(el => el.userId);
+        await updateDoc(doc(db, "groups", activeChatData.id), {
             members: newMembers,
         })
-        deleteChat(currentGroupId);
+        deleteChat(activeChatData.id);
 
     }
-
     const handleChatDelete = async () => {
         setIsDeletingChatLoading(true);
-        if (activeChatData.length > 1) leaveGroup(); else deleteChat(currentGroupId);
+        if (members.length > 1) leaveGroup(); else deleteChat(activeChatData.id);
         setIsDeletingChatLoading(false);
         setIsWarningModalOpen(false);
     }
@@ -253,10 +246,17 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                         <div className="flex items-center">
                             <ChevronLeft color={themeMode === "dark" ? "#ffffff" : "#000000"} onClick={hideChat} className="md:hidden cursor-pointer mr-4" />
                             <>
-                                <img src={activeChatData[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full mr-4" />
+                                {isGroup ?
+                                    <div className="flex -space-x-6 items-center mr-4">
+                                        <img src={members[0]?.photoUrl} referrerPolicy="no-referrer" className="w-12 h-12 rounded-full border-[1px] border-black/20" />
+                                        <img src={members[1]?.photoUrl} referrerPolicy="no-referrer" className="w-10 h-10 rounded-full border-[1px] border-black/20" />
+                                    </div>
+                                    :
+                                    <img src={members[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 mr-4 rounded-full border-[1px] border-black/20" />
+                                }
                                 <div className="flex flex-col space-y-1 text-textColor">
-                                    <p className="text-sm">{activeChatData[0]?.display_name}</p>
-                                    <p className="text-xs">{activeChatData[0]?.activityStatus}</p>
+                                    <p className="text-sm">{isGroup ? activeChatData.group_name : members[0].display_name}</p>
+                                    <p className="text-xs">{!isGroup && members[0].activityStatus}</p>
                                 </div>
                             </>
                         </div>
@@ -273,7 +273,7 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => setIsWarningModalOpen(true)} className="flex space-x-4 items-center cursor-pointer p-2">
                                             <Trash color="#b91c1c" className="w-5 h-5" />
-                                            <p className="text-primaryCHover font-bold">{activeChatData.length > 1 ? "Leave Group" : "Delete Chat"}</p>
+                                            <p className="text-primaryCHover font-bold">{members.length > 1 ? "Leave Group" : "Delete Chat"}</p>
                                         </DropdownMenuItem>
                                     </DropdownMenuGroup>
                                 </DropdownMenuContent>
@@ -290,11 +290,11 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
                     className="w-full h-[calc(100dvh)] overflow-y-scroll scrollbar-hide flex flex-col-reverse py-6">
-                    {activeChatData.length > 0 && text.map((m, index) => {
+                    {members.length > 0 && text.map((m, index) => {
                         return <ChatMessage key={index} side={m.sentBy == auth?.currentUser?.uid ? 1 : 2} text={text} m={m} index={index} isMessageSending={isMessageSending} />
                     })}
                     <div className={`w-full flex justify-center`}>
-                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && text.length > 0 && (
+                        {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (
                             <div className="flex flex-col items-center justify-center p-6">
                                 <img src={newchat} className="w-48 h-48 sm:w-64 sm:h-64" />
                                 <p className="text-sm md:text-md text-center text-textColor">Welcome to the conversation! Write something down to start the convo.</p>
@@ -323,24 +323,26 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
 }
 
 const ModalList = () => {
-    const { myUserData, setMemberListWindow, activeChatData, currentGroupId } = useContext(PageContext);
+    const { myUserData, setMemberListWindow, activeChatData } = useContext(PageContext);
+    const members = activeChatData.members;
 
+    const { randomUUID } = new ShortUniqueId({ length: 10 });
     const handleAddMember = async (item, index) => {
         if (!item || item.userId === undefined) return;
 
-        await updateDoc(doc(db, "groups", currentGroupId), {
+        await updateDoc(doc(db, "groups", activeChatData.id), {
             members: arrayUnion(item.userId),
+            group_name: randomUUID()
         })
         await updateDoc(doc(db, "users", item.userId), {
-            groups: arrayUnion(currentGroupId),
+            groups: arrayUnion(activeChatData.id),
         })
-        console.log("Added member:" + item.userId);
     }
 
     let checkIfExists = (item, index) => {
         if (!item || item.display_name === undefined) return;
-        for (let i = 0; i < activeChatData.length; i++) {
-            if (activeChatData[i].display_name === item.display_name) return true;
+        for (let i = 0; i < members.length; i++) {
+            if (members[i].display_name === item.display_name) return true;
         }
         return false;
     }

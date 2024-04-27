@@ -42,7 +42,6 @@ export default function HomeDashboard({ cookies }) {
     const [myUserData, setMyUserData] = useState({});
     const [myGroups, setMyGroups] = useState([]);
     const [selectedSidebar, setSelectedSidebar] = useState(1); // 1 - chat, 2 - friend requests
-    const [currentGroupId, setCurrentGroupId] = useState("");
     const [isChatSidebarLoading, setChatSidebarLoading] = useState(true);
     const [activeChatData, setActiveChatData] = useState({});
     const [memberListWindow, setMemberListWindow] = useState(false);
@@ -298,25 +297,29 @@ export default function HomeDashboard({ cookies }) {
 
     const handleChat = async (username) => {
         const [other_user, commonGroups] = await getGroup(username);
-
+        let dataToSave = {};
         if (commonGroups.length == 0) {
             const newDocRef = await addDoc(collection(db, "groups"), {
                 createdAt: firestoreTimestamp(),
                 createdBy: auth?.currentUser?.uid,
                 members: [auth?.currentUser?.uid, other_user.docs[0].data().userId],
-                id: ''
+                id: '',
+                numMessages: 0,
             })
 
             // Access the ID of the newly created document using the id property of the reference
             const newDocId = newDocRef.id;
-
-
             // Update the document with the actual ID
             await updateDoc(newDocRef, { id: newDocId });
-            setCurrentGroupId(newDocId);
+
+            const docSnapshot = await getDoc(newDocRef);
+
+            console.log(docSnapshot.data())
+            dataToSave = { ...docSnapshot.data(), members: [other_user.docs[0].data()] };
         } else {
-            setCurrentGroupId(commonGroups[0].data().id);
+            dataToSave = { ...commonGroups[0].data(), members: [other_user.docs[0].data()] };
         }
+        setActiveChatData(dataToSave);
         setChatOpen(true);
     }
 
@@ -360,7 +363,6 @@ export default function HomeDashboard({ cookies }) {
     const hideChat = () => {
         setChatOpen(false);
         setActiveChatData({});
-        setCurrentGroupId("");
     }
 
 
@@ -371,7 +373,6 @@ export default function HomeDashboard({ cookies }) {
                     width,
                     myUserData,
                     myGroups,
-                    currentGroupId,
                     activeChatData,
                     setMemberListWindow,
                     deleteChat,
@@ -393,11 +394,11 @@ export default function HomeDashboard({ cookies }) {
                                     selectedSidebar === 1 ?
                                         <ChatSidebar
                                             usersRef={usersRef}
+                                            activeChatData={activeChatData}
                                             setActiveChatData={(v) => setActiveChatData(v)}
                                             handleChat={(v) => handleChat(v)}
                                             setChatOpen={(v) => setChatOpen(v)}
                                             removeFriend={(r) => handleRemoveFriend(r)}
-                                            setCurrentGroupId={(v) => setCurrentGroupId(v)}
                                         />
                                         :
                                         <RequestsSidebar
@@ -422,7 +423,7 @@ export default function HomeDashboard({ cookies }) {
                     <Panel minSize={35} className={`w-full h-full ${(!isChatOpened && "hidden md:flex justify-center items-center")}`}>
 
                         <AnimatePresence>
-                            {isChatOpened && currentGroupId && (
+                            {isChatOpened && (
                                 <ChatBox
                                     memberListWindow={memberListWindow}
                                     setMemberListWindow={(v) => setMemberListWindow(v)}
@@ -432,7 +433,7 @@ export default function HomeDashboard({ cookies }) {
                         </AnimatePresence>
 
                         <AnimatePresence>
-                            {!isChatOpened && !currentGroupId && (
+                            {!isChatOpened && Object.keys(activeChatData).length === 0 && (
                                 <EmptyChatWindow />
                             )}
                         </AnimatePresence>

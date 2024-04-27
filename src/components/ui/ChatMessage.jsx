@@ -41,7 +41,7 @@ export const ChatMessage = ({ side, text, m, index, isMessageSending }) => {
                             {m.message}
                         </a>
                     ) : (
-                        <p className={`${side === 1 ? "text-white" : "text-textColor"} text-sm`}>{index}: {m.message}</p>
+                        <p className={`${side === 1 ? "text-white" : "text-textColor"} text-sm`}>{m.message}</p>
                     )}
                     {isMessageSending && index === 0 &&
                         <div className={`absolute -bottom-6 right-0`}><BeatLoader size={8} color="#c91e1e" /></div>

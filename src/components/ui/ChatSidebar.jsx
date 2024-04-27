@@ -24,26 +24,24 @@ export const ChatSidebar = ({
 
     usersRef,
     removeFriend,
+    activeChatData,
     setActiveChatData,
     setChatOpen,
-    setCurrentGroupId,
     handleChat
 
     }) => {
-    const { myUserData, myGroups, currentGroupId, deleteChat } = useContext(PageContext);
+    const { myUserData, myGroups, deleteChat } = useContext(PageContext);
     const { themeMode, handleChangeThemeMode } = useContext(ThemeProvider);
 
     const ref = useRef(); // We will use React useRef hook to reference the wrapping div:
     const { events } = useDraggable(ref);
 
     const handleBubble = (r) => {
-        setActiveChatData([r]);
-        handleChat(r?.display_name);
+        handleChat(r.display_name);
     }
 
     const handleChatByGroupId = async (item) => {
-        setCurrentGroupId(item.id);
-        setActiveChatData(item.members);
+        setActiveChatData(item);
         setChatOpen(true);
     }
 
@@ -64,7 +62,10 @@ export const ChatSidebar = ({
                 <SwipeAction
                     destructive={true}
                     className="bg-red-700 rounded-xl p-3 mb-1 ml-1 text-white font-bold"
-                    onClick={async () => await deleteChat(id)}
+                    onClick={async () => {
+                        console.log(id);
+                        await deleteChat(id)
+                    }}
                 >
                     <Trash2 color="#fff" className="w-full h-full p-3" />
                 </SwipeAction>
@@ -78,7 +79,7 @@ export const ChatSidebar = ({
                 <div className="w-full flex justify-between items-center">
                     <div className="flex flex-col space-y-1">
                         <p className="text-textColor text-lg md:text-2xl font-[500]">Chats</p>
-                        <p className="text-sm text-secondOrderText text-gray-500">People, Groups, Messages</p>
+                        <p className="text-sm text-secondOrderText">People, Groups, Messages</p>
                     </div>
                     <div className="flex items-center space-x-3">
                         <Switch
@@ -128,7 +129,7 @@ export const ChatSidebar = ({
                                         className="w-full rounded-lg"
                                     >
                                         <ChatHistory
-                                            isSelected={currentGroupId === item.id}
+                                            isSelected={activeChatData.id === item.id}
                                             item={item}
                                             index={index}
                                             handleClick={() => handleChatByGroupId(item)}
