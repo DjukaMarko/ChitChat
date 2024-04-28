@@ -26,7 +26,7 @@ export const ChatMessage = ({ side, text, m, index, isMessageSending }) => {
         i'm comparing the current message with the next message and showing the time difference between them.
     */
     return (
-        <div className={`flex flex-col ${side === 1 ? "items-end" : "items-start"} mt-1  ${side === 2 && (text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy) && "mt-4"}`}>
+        <div className={`flex flex-col ${side === 1 ? "items-end" : "items-start"} mt-[0.2rem] ${side === 2 && (text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy) && "mt-4"}`}>
             {/* show the time difference between the current message and the next message */}
             {isDifference(m, text[index === text.length - 1 ? index : index + 1], text.length, index) && (
                 <div className={`w-full flex justify-center my-3`}>

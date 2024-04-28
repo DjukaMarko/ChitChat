@@ -260,7 +260,7 @@ export const ChatBox = ({ hideChat }) => {
                                     <img src={members[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 mr-4 rounded-full border-[1px] border-black/20" />
                                 }
                                 <div className="flex flex-col space-y-1 text-textColor">
-                                    <p className="text-sm">{isGroup ? activeChatData.group_name : members[0].display_name}</p>
+                                    <p className="text-sm">{isGroup ? "group-" + activeChatData.group_name : members[0].display_name}</p>
                                     <p className="text-xs">{!isGroup && members[0].activityStatus}</p>
                                 </div>
                             </>
