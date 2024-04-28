@@ -33,7 +33,7 @@ import { PageContext } from "../misc/PageContext";
 import { BookUser, GripVertical, LogOut, MessageSquareHeart } from "lucide-react";
 import { BeatLoader } from "react-spinners";
 import { AnimatePresence, motion } from "framer-motion";
-import { refresh } from "@/lib/utils";
+import { compareMembers, refresh } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
 
 export default function HomeDashboard({ cookies }) {
@@ -158,6 +158,7 @@ export default function HomeDashboard({ cookies }) {
                 snapshots_to_unmount.push(unsubscribe);
             }));
             setMyGroups(prev => prev.filter(prevVal => myUserData.groups.includes(prevVal.id)))
+
         }
 
         fetchGroups();
@@ -173,7 +174,17 @@ export default function HomeDashboard({ cookies }) {
 
     useEffect(() => {
         if (myGroups.length > 0) setChatSidebarLoading(false);
+
+        if (Object.keys(activeChatData).length > 0) {
+            if(!compareMembers(myGroups.find(group => group.id === activeChatData.id), activeChatData)) {
+                setActiveChatData(prevData => {
+                    const foundGroup = myGroups.find(group => group.id === prevData.id);
+                    return foundGroup;
+                });
+            }
+        }
     }, [myGroups]);
+
 
 
     const handleReject = async (r) => {

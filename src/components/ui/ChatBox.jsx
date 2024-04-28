@@ -333,7 +333,7 @@ export const ChatBox = ({ hideChat }) => {
 const ModalListMembers = ({ setShown }) => {
     const { myUserData, activeChatData } = useContext(PageContext);
     const members = [myUserData, ...activeChatData.members];
-    
+
 
     return (
         <div className="w-full h-full flex flex-col space-y-4">
@@ -373,10 +373,20 @@ const ModalAddMember = ({ setShown }) => {
     const handleAddMember = async (item, index) => {
         if (!item || item.userId === undefined) return;
 
-        await updateDoc(doc(db, "groups", activeChatData.id), {
-            members: arrayUnion(item.userId),
-            group_name: randomUUID()
-        })
+        let groupData = await getDoc(doc(db, "groups", activeChatData.id));
+        if (groupData.data().members.includes(item.userId)) return;
+
+        if (!groupData.data().group_name) {
+            await updateDoc(doc(db, "groups", activeChatData.id), {
+                members: arrayUnion(item.userId),
+                group_name: randomUUID()
+            });
+        } else {
+            await updateDoc(doc(db, "groups", activeChatData.id), {
+                members: arrayUnion(item.userId)
+            });
+        }
+
         await updateDoc(doc(db, "users", item.userId), {
             groups: arrayUnion(activeChatData.id),
         })
