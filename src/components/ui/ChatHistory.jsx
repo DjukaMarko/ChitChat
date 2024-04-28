@@ -17,7 +17,7 @@ export const ChatHistory = ({ isSelected, item, index, handleClick }) => {
                 }
                 <div className="inline-flex flex-col space-y-1 justify-center">
                     <p className="text-sm md:text-md text-textColor">{
-                        isGroup ? "group-" + item.group_name || "NaN" : item.members[0].display_name
+                        isGroup ? item.group_name || "NaN" : item.members[0].display_name
                     }</p>
                     <div className="inline-flex space-x-2 items-center text-secondOrderText">
                         <div className="inline-flex space-x-1">

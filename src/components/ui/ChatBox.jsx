@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { auth, db, storage } from "@/config/firebase"
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import newchat from "@/../public/newchat.svg"
-import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, runTransaction, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
 import { ChatMessage } from "./ChatMessage";
@@ -260,7 +260,7 @@ export const ChatBox = ({ hideChat }) => {
                                     <img src={members[0]?.photoUrl} referrerPolicy="no-referrer" className="w-10 mr-4 rounded-full border-[1px] border-black/20" />
                                 }
                                 <div className="flex flex-col space-y-1 text-textColor">
-                                    <p className="text-sm">{isGroup ? "group-" + activeChatData.group_name : members[0].display_name}</p>
+                                    <p className="text-sm">{isGroup ? activeChatData.group_name : members[0].display_name}</p>
                                     <p className="text-xs">{!isGroup && members[0].activityStatus}</p>
                                 </div>
                             </>
@@ -369,23 +369,12 @@ const ModalAddMember = ({ setShown }) => {
     const { myUserData, activeChatData } = useContext(PageContext);
     const members = activeChatData.members;
 
-    const { randomUUID } = new ShortUniqueId({ length: 10 });
     const handleAddMember = async (item, index) => {
         if (!item || item.userId === undefined) return;
 
-        let groupData = await getDoc(doc(db, "groups", activeChatData.id));
-        if (groupData.data().members.includes(item.userId)) return;
-
-        if (!groupData.data().group_name) {
-            await updateDoc(doc(db, "groups", activeChatData.id), {
-                members: arrayUnion(item.userId),
-                group_name: randomUUID()
-            });
-        } else {
-            await updateDoc(doc(db, "groups", activeChatData.id), {
-                members: arrayUnion(item.userId)
-            });
-        }
+        await updateDoc(doc(db, "groups", activeChatData.id), {
+            members: arrayUnion(item.userId)
+        });
 
         await updateDoc(doc(db, "users", item.userId), {
             groups: arrayUnion(activeChatData.id),

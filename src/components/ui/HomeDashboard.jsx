@@ -35,6 +35,7 @@ import { BeatLoader } from "react-spinners";
 import { AnimatePresence, motion } from "framer-motion";
 import { compareMembers, refresh } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
+import ShortUniqueId from "short-unique-id";
 
 export default function HomeDashboard({ cookies }) {
     const { width } = useWindowDimensions();
@@ -175,7 +176,7 @@ export default function HomeDashboard({ cookies }) {
     useEffect(() => {
         if (myGroups.length > 0) setChatSidebarLoading(false);
 
-        if (Object.keys(activeChatData).length > 0) {
+        if (Object.keys(activeChatData).length > 0 && myGroups.find(group => group.id === activeChatData.id) !== undefined) {
             if(!compareMembers(myGroups.find(group => group.id === activeChatData.id), activeChatData)) {
                 setActiveChatData(prevData => {
                     const foundGroup = myGroups.find(group => group.id === prevData.id);
@@ -308,6 +309,7 @@ export default function HomeDashboard({ cookies }) {
     const handleChat = async (username) => {
         const [other_user, commonGroups] = await getGroup(username);
         let dataToSave = {};
+        const { randomUUID } = new ShortUniqueId({ length: 10 });
         if (commonGroups.length == 0) {
             const newDocRef = await addDoc(collection(db, "groups"), {
                 createdAt: firestoreTimestamp(),
@@ -315,6 +317,7 @@ export default function HomeDashboard({ cookies }) {
                 members: [auth?.currentUser?.uid, other_user.docs[0].data().userId],
                 id: '',
                 numMessages: 0,
+                group_name: "group-" + randomUUID()
             })
 
             // Access the ID of the newly created document using the id property of the reference
