@@ -314,10 +314,13 @@ export default function HomeDashboard({ cookies }) {
             const newDocRef = await addDoc(collection(db, "groups"), {
                 createdAt: firestoreTimestamp(),
                 createdBy: auth?.currentUser?.uid,
-                members: [auth?.currentUser?.uid, other_user.docs[0].data().userId],
+                group_name: "group-" + randomUUID(),
                 id: '',
+                lastMessage: "",
+                lastMessageSent: "",
+                lastMessageSentBy: "",
+                members: [auth?.currentUser?.uid, other_user.docs[0].data().userId],
                 numMessages: 0,
-                group_name: "group-" + randomUUID()
             })
 
             // Access the ID of the newly created document using the id property of the reference
