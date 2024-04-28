@@ -28,7 +28,7 @@ export default function Modal({ children, isShown, setShown }) {
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="w-full sm:w-auto max-h-96 m-4 bg-backgroundTheme px-6 py-3 md:px-12 md:py-6 rounded-xl z-[6] overflow-y-scroll cursor-default scrollbar-hide">
+                            className="w-full sm:w-[32rem] h-[24rem] m-4 bg-backgroundTheme px-8 py-6 rounded-xl z-[6] cursor-default scrollbar-hide">
                             {children}
                         </motion.div>
                     </div>

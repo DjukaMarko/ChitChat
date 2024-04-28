@@ -7,7 +7,7 @@ import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
 import { BeatLoader } from "react-spinners";
 import { ChatMessage } from "./ChatMessage";
 import { motion } from "framer-motion";
-import emptylist from "@/../public/404illustration.jpg"
+import emptylist from "@/../public/404illustration.svg"
 import surprisedImage from "@/../public/surprised.svg"
 
 import {
@@ -17,7 +17,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronLeft, CirclePlus, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus, X } from "lucide-react";
+import { ChevronLeft, CirclePlus, ContactRound, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus, X } from "lucide-react";
 import { PageContext } from "../misc/PageContext";
 import Modal from "./Modal";
 import { Button } from "./button";
@@ -27,10 +27,10 @@ import { ThemeProvider } from "../misc/ThemeProvider";
 import ShortUniqueId from "short-unique-id";
 
 
-export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => {
-    
+export const ChatBox = ({ hideChat }) => {
+
     const { activeChatData, deleteChat } = useContext(PageContext);
-    if(Object.keys(activeChatData).length === 0) return;
+    if (Object.keys(activeChatData).length === 0) return;
 
     const { themeMode } = useContext(ThemeProvider);
     const [loadMoreDocs, setLoadMoreDocs] = useState(1);
@@ -41,6 +41,8 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
     const [isMessageLoading, setMessageLoading] = useState(true);
     const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
     const [isDeletingChatLoading, setIsDeletingChatLoading] = useState(false);
+    const [memberListWindow, setMemberListWindow] = useState(false);
+    const [addMemberWindow, setMemberWindow] = useState(false);
 
     const isGroup = activeChatData.members.length > 1;
     const members = activeChatData.members;
@@ -239,8 +241,11 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                 transition={{ duration: 0.1 }}
                 className="w-full h-[calc(100dvh)] relative flex flex-col">
                 <div className="relative w-full border-b-[1px] border-secondaryC z-[2]">
+                    <Modal isShown={addMemberWindow} setShown={setMemberWindow}>
+                        <ModalAddMember setShown={setMemberWindow} />
+                    </Modal>
                     <Modal isShown={memberListWindow} setShown={setMemberListWindow}>
-                        <ModalList />
+                        <ModalListMembers setShown={setMemberWindow} />
                     </Modal>
                     <div className="flex items-center justify-between p-4 sm:p-5">
                         <div className="flex items-center">
@@ -265,14 +270,18 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
                                 <DropdownMenuTrigger asChild>
                                     <Ellipsis color={themeMode === "dark" ? "#ffffff" : "#000000"} className="cursor-pointer" />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className={`m-2 ${themeMode === "dark" ? "dark" : "light"} border-secondaryC bg-backgroundTheme`}>
+                                <DropdownMenuContent className={`m-2 w-40 ${themeMode === "dark" ? "dark" : "light"} border-secondaryC bg-backgroundTheme`}>
                                     <DropdownMenuGroup>
-                                        <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="flex space-x-4 items-center cursor-pointer p-2 text-textColor">
-                                            <UserRoundPlus className="w-5 h-5" />
-                                            <p>Add Member</p>
+                                        <DropdownMenuItem onClick={() => setMemberListWindow(true)} className="w-full flex justify-between items-center cursor-pointer text-textColor">
+                                            <ContactRound className="w-5" />
+                                            <p>View Members</p>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setIsWarningModalOpen(true)} className="flex space-x-4 items-center cursor-pointer p-2">
-                                            <Trash color="#b91c1c" className="w-5 h-5" />
+                                        <DropdownMenuItem onClick={() => setMemberWindow(true)} className="w-full flex justify-between items-center cursor-pointer text-textColor">
+                                            <UserRoundPlus className="w-5" />
+                                            <p>Add Members</p>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setIsWarningModalOpen(true)} className="w-full flex justify-between items-center cursor-pointer">
+                                            <Trash color="#b91c1c" className="w-5" />
                                             <p className="text-primaryCHover font-bold">{members.length > 1 ? "Leave Group" : "Delete Chat"}</p>
                                         </DropdownMenuItem>
                                     </DropdownMenuGroup>
@@ -321,9 +330,43 @@ export const ChatBox = ({ memberListWindow, setMemberListWindow, hideChat }) => 
         </>
     )
 }
+const ModalListMembers = ({ setShown }) => {
+    const { myUserData, activeChatData } = useContext(PageContext);
+    const members = [myUserData, ...activeChatData.members];
+    
 
-const ModalList = () => {
-    const { myUserData, setMemberListWindow, activeChatData } = useContext(PageContext);
+    return (
+        <div className="w-full h-full flex flex-col space-y-4">
+            <div>
+                <p className="text-textColor text-lg sm:text-2xl">List of all members</p>
+                <div className="w-full h-[1px] bg-secondaryC mt-2"></div>
+            </div>
+            <div className="w-full h-full overflow-y-scroll scrollbar-hide flex flex-col space-y-1">
+                {members.length <= 1 ?
+                    <div className="w-full p-6 h-full flex flex-col justify-center items-center space-y-6 text-textColor">
+                        <img src={emptylist} className="w-28" />
+                        <div className="flex flex-col justify-center items-center text-sm">
+                            <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
+                            <p className="font-[400] tracking-wide">Let's add some friends first!</p>
+                        </div>
+                        <Button className="bg-red-800 hover:bg-red-700 text-white" onClick={() => setShown(false)}>Close</Button>
+                    </div>
+                    :
+                    members.map(item => (
+                        <div key={item.userId} className="w-full flex justify-between items-center text-textColor hover:bg-secondaryCHover cursor-pointer p-1 rounded-xl">
+                            <div className="flex space-x-4 items-center">
+                                <img src={item?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full" />
+                                <p className="text-xs sm:text-sm">{item.display_name}</p>
+                            </div>
+                        </div>
+                    ))}
+            </div>
+        </div>
+    )
+}
+
+const ModalAddMember = ({ setShown }) => {
+    const { myUserData, activeChatData } = useContext(PageContext);
     const members = activeChatData.members;
 
     const { randomUUID } = new ShortUniqueId({ length: 10 });
@@ -348,30 +391,36 @@ const ModalList = () => {
     }
 
     return (
-        <>
-            {myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).length === 0 ? (
-                <div className="w-full p-6 h-full flex flex-col justify-center items-center space-y-6">
-                    <img src={emptylist} className="w-52" />
-                    <div className="flex flex-col justify-center items-center text-sm">
-                        <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
-                        <p className="font-[400] tracking-wide">Let's add some friends first!</p>
-                    </div>
-                    <Button className="bg-red-800 hover:bg-red-700" onClick={() => setMemberListWindow(false)}>Close</Button>
-                </div>
-            ) : (
-                myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).map((item, index) => (
-                    <div key={item?.userId} className="w-full sm:w-[20rem] flex justify-between items-center hover:bg-[#f0f0f0] cursor-pointer p-2 rounded-xl">
-                        <div className="flex space-x-4 items-center">
-                            <img src={item?.photoUrl} referrerPolicy="no-referrer" className="w-[50px] h-[50px] rounded-full" />
-                            <p className="text-sm md:text-md">{item?.display_name}</p>
+        <div className="w-full h-full flex flex-col space-y-4">
+            <div>
+                <p className="text-textColor text-lg sm:text-2xl">Add members</p>
+                <div className="w-full h-[1px] bg-secondaryC mt-2"></div>
+            </div>
+            <div className="overflow-y-scroll scrollbar-hide flex flex-col space-y-1">
+                {myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).length === 0 ? (
+                    <div className="w-full p-6 h-full flex flex-col justify-center items-center space-y-6 text-textColor">
+                        <img src={emptylist} className="w-28" />
+                        <div className="flex flex-col justify-center items-center text-sm">
+                            <p className="font-[400] tracking-wide">Oops, it's too quiet in here! &#x1F60E;</p>
+                            <p className="font-[400] tracking-wide">Let's add some friends first!</p>
                         </div>
-                        <button onClick={(event) => {
-                            handleAddMember(item, index)
-                            event.currentTarget.disabled = true;
-                        }} className="disabled:cursor-not-allowed disabled:opacity-50"><CirclePlus /></button>
+                        <Button className="bg-red-800 hover:bg-red-700 text-white" onClick={() => setShown(false)}>Close</Button>
                     </div>
-                ))
-            )}
-        </>
+                ) : (
+                    myUserData?.friends?.filter((item, index) => !checkIfExists(item, index)).map((item, index) => (
+                        <div key={item?.userId} className="w-full flex justify-between items-center text-textColor hover:bg-secondaryCHover cursor-pointer p-1 rounded-xl">
+                            <div className="flex space-x-4 items-center">
+                                <img src={item?.photoUrl} referrerPolicy="no-referrer" className="w-10 rounded-full" />
+                                <p className="text-xs sm:text-sm">{item?.display_name}</p>
+                            </div>
+                            <button onClick={(event) => {
+                                handleAddMember(item, index)
+                                event.currentTarget.disabled = true;
+                            }} className="disabled:cursor-not-allowed disabled:opacity-50"><CirclePlus size={22} /></button>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
     )
 }

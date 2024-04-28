@@ -44,7 +44,6 @@ export default function HomeDashboard({ cookies }) {
     const [selectedSidebar, setSelectedSidebar] = useState(1); // 1 - chat, 2 - friend requests
     const [isChatSidebarLoading, setChatSidebarLoading] = useState(true);
     const [activeChatData, setActiveChatData] = useState({});
-    const [memberListWindow, setMemberListWindow] = useState(false);
     const { themeMode } = useContext(ThemeProvider);
     const usersRef = collection(db, "users");
 
@@ -372,7 +371,6 @@ export default function HomeDashboard({ cookies }) {
                     myUserData,
                     myGroups,
                     activeChatData,
-                    setMemberListWindow,
                     deleteChat,
                     usersRef
                 }}
@@ -423,8 +421,6 @@ export default function HomeDashboard({ cookies }) {
                         <AnimatePresence>
                             {isChatOpened && (
                                 <ChatBox
-                                    memberListWindow={memberListWindow}
-                                    setMemberListWindow={(v) => setMemberListWindow(v)}
                                     hideChat={hideChat}
                                 />
                             )}
