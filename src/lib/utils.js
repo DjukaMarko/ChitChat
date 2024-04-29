@@ -84,12 +84,16 @@ export const isValidUrl = urlString => {
   return urlRegex.test(urlString);
 }
 
-export function compareMembers(json1, json2) {
+export function areGroupsEqual(json1, json2) {
   const members1 = json1.members || [];
   const members2 = json2.members || [];
 
   if (members1.length !== members2.length) {
       return false; // If lengths are different, arrays are not equal
+  }
+
+  if(json1.group_name !== json2.group_name) {
+    return false;
   }
 
   return true; // Arrays are equal

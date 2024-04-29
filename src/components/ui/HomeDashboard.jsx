@@ -33,7 +33,7 @@ import { PageContext } from "../misc/PageContext";
 import { BookUser, GripVertical, LogOut, MessageSquareHeart } from "lucide-react";
 import { BeatLoader } from "react-spinners";
 import { AnimatePresence, motion } from "framer-motion";
-import { compareMembers, refresh } from "@/lib/utils";
+import { areGroupsEqual, refresh } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
 import ShortUniqueId from "short-unique-id";
 
@@ -137,8 +137,14 @@ export default function HomeDashboard({ cookies }) {
             if (myUserData.groups.length === 0) setChatSidebarLoading(false);
 
             await Promise.all(myUserData.groups.filter(group => group.length > 0).map(async group => {
+
                 const unsubscribe = onSnapshot(doc(db, "groups", group), async snapshot => {
-                    const membersData = await Promise.all(snapshot.data().members.filter(member => member !== myUserData.userId).map(async member => {
+                    
+                    if (!snapshot.exists()) {
+                        console.log("Group document does not exist. It might have been deleted.");
+                        return;
+                    }
+                    const membersData = await Promise.all(snapshot.data().members.map(async member => {
                         let memberData = await getDoc(doc(db, "users", member));
                         return memberData.data();
                     }));
@@ -177,7 +183,7 @@ export default function HomeDashboard({ cookies }) {
         if (myGroups.length > 0) setChatSidebarLoading(false);
 
         if (Object.keys(activeChatData).length > 0 && myGroups.find(group => group.id === activeChatData.id) !== undefined) {
-            if(!compareMembers(myGroups.find(group => group.id === activeChatData.id), activeChatData)) {
+            if(!areGroupsEqual(myGroups.find(group => group.id === activeChatData.id), activeChatData)) {
                 setActiveChatData(prevData => {
                     const foundGroup = myGroups.find(group => group.id === prevData.id);
                     return foundGroup;
@@ -315,7 +321,7 @@ export default function HomeDashboard({ cookies }) {
                 createdAt: firestoreTimestamp(),
                 createdBy: auth?.currentUser?.uid,
                 group_name: "group-" + randomUUID(),
-                id: '',
+                id: "",
                 lastMessage: "",
                 lastMessageSent: "",
                 lastMessageSentBy: "",
@@ -329,9 +335,9 @@ export default function HomeDashboard({ cookies }) {
             await updateDoc(newDocRef, { id: newDocId });
             const docSnapshot = await getDoc(newDocRef);
 
-            dataToSave = { ...docSnapshot.data(), members: [other_user.docs[0].data()] };
+            dataToSave = { ...docSnapshot.data(), members: [myUserData, other_user.docs[0].data()] };
         } else {
-            dataToSave = { ...commonGroups[0].data(), members: [other_user.docs[0].data()] };
+            dataToSave = { ...commonGroups[0].data(), members: [myUserData, other_user.docs[0].data()] };
         }
         setActiveChatData(dataToSave);
         setChatOpen(true);

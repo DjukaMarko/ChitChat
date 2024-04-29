@@ -1,23 +1,28 @@
 import { auth } from "@/config/firebase"
 import { formatTimeAgo } from "@/lib/utils";
+import { useContext } from "react";
+import { PageContext } from "../misc/PageContext";
 
 export const ChatHistory = ({ isSelected, item, index, handleClick }) => {
-    const isGroup = item.members.length > 1;
+    const { myUserData } = useContext(PageContext);
+    let members = item.members.length > 1 ? item.members.filter(item => item.userId !== myUserData.userId) : item.members;
+    const isGroup = members.length > 1;
+
     return (
         <div onClick={handleClick} className={`w-full ${isSelected ? "bg-secondaryCHover" : "bg-terciaryC"} rounded-xl cursor-pointer p-3 inline-flex relative space-x-4 hover:bg-secondaryCHover mb-1`} key={index}>
 
             <div className="flex space-x-4 items-center">
                 {isGroup ? 
                     <div className="flex -space-x-6 items-center">
-                        <img src={item.members[0].photoUrl} referrerPolicy="no-referrer" className="w-12 sm:w-14 rounded-full border-[1px] border-black/20" />
-                        <img src={item.members[1].photoUrl} referrerPolicy="no-referrer" className="w-10 sm:w-12 rounded-full border-[1px] border-black/20" />
+                        <img src={members[0]?.photoUrl} referrerPolicy="no-referrer" className="w-12 sm:w-14 rounded-full border-[1px] border-black/20" />
+                        <img src={members[1]?.photoUrl} referrerPolicy="no-referrer" className="w-10 sm:w-12 rounded-full border-[1px] border-black/20" />
                     </div>
                 :
-                    <img src={item.members[0].photoUrl} referrerPolicy="no-referrer" className="w-12 rounded-full border-[1px] border-black/20" /> 
+                    <img src={members[0]?.photoUrl} referrerPolicy="no-referrer" className="w-12 rounded-full border-[1px] border-black/20" /> 
                 }
                 <div className="inline-flex flex-col space-y-1 justify-center">
                     <p className="text-sm md:text-md text-textColor">{
-                        isGroup ? item.group_name || "NaN" : item.members[0].display_name
+                        isGroup ? item.group_name || "NaN" : members[0]?.display_name
                     }</p>
                     <div className="inline-flex space-x-2 items-center text-secondOrderText">
                         <div className="inline-flex space-x-1">
