@@ -57,13 +57,13 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
             )}
             <div className={`${isSentByMe ? "mr-4" : "ml-4 flex items-end space-x-3"} max-w-[70%] md:max-w-[95%] lg:max-w-[80%] 2xl:max-w-[80%] `}>
                 {!isSentByMe && ((text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy || index + 1 === text.length) && <img className="w-7 rounded-full" src={userMessageData?.photoUrl} />)}
-                <div className={`${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ml-[2.5rem] ${Object.keys(linkData).length === 0 && "py-[7px] px-3"} rounded-lg break-words cursor-pointer relative`}>
+                <div className={`${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ml-[2.5rem] ${Object.keys(linkData).length === 0 && "py-[7px] px-3"} rounded-lg cursor-pointer relative`}>
 
                     {isValidUrl(m.message) ? (
                         linkData && (linkData.siteData ? ( // Check if linkData is not empty and contains siteData
                             <a target="_blank" href={linkData.siteData?.url} className="flex flex-col shadow-lg 2xl:w-72">
                                 <img className="rounded-t-sm" src={linkData.siteData?.image} />
-                                <p className={`${isSentByMe ? "text-white" : "text-textColor"} text-sm underline p-2`}>{linkData.siteData?.title}</p>
+                                <p className={`${isSentByMe ? "text-white" : "text-textColor"} text-sm underline p-2 break-words`}>{linkData.siteData?.title}</p>
                             </a>
                         ) : linkData.isFirebase ? (
                             linkData.extension === "png" || linkData.extension === "jpg" ? (
@@ -71,17 +71,17 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
                             ) : (
                                 <a target="_blank" href={m.message} className={`p-2 ${isSentByMe ? "text-white" : "text-textColor"} flex items-center`}>
                                     <File className="mr-2" size={18} />
-                                    <p className="underline text-sm">{linkData.fileName}</p>
+                                    <p className="underline text-sm break-all">{linkData.fileName}</p>
                                 </a>
                             )
                         ) : (
-                            <a href={m.message.startsWith("http") ? m.message : `https://${m.message}`} className={`${isSentByMe ? "text-white" : "text-black"} underline text-sm`} target="_blank" rel="noopener noreferrer">
+                            <a href={m.message.startsWith("http") ? m.message : `https://${m.message}`} className={`${isSentByMe ? "text-white" : "text-black"} underline text-sm break-all`} target="_blank" rel="noopener noreferrer">
                                 {m.message}
                             </a>
                         )
                         )
                     ) : (
-                        <p className={`${isSentByMe ? "text-white" : "text-textColor"} text-sm`}>{m.message}</p>
+                        <p className={`${isSentByMe ? "text-white" : "text-textColor"} text-sm break-words`}>{m.message}</p>
                     )}
 
                     {isMessageSending && isSentByMe &&
