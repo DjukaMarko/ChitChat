@@ -27,6 +27,7 @@ import WarningModalPrint from "./WarningModalPrint";
 import { hasOnlyBlankSpaces } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
 import uuid4 from "uuid4";
+import ShortUniqueId from "short-unique-id";
 
 
 export const ChatBox = ({ hideChat }) => {
@@ -73,12 +74,12 @@ export const ChatBox = ({ hideChat }) => {
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (!file) return;
-
+        const { randomUUID } = new ShortUniqueId({ length: 4 });
+        const fileName = file.name.split('.').shift();
         const fileExtension = file.name.split('.').pop();
-        const allowedImages = ["jpg", "jpeg", "png"];
-        const fileName = allowedImages.includes(fileExtension) ? uuid4() + "." + fileExtension : file.name;
+        const fileToWrite = fileName + "(" + randomUUID() + ")" + "."+ fileExtension;
 
-        const storageRef = ref(storage, `${activeChatData.id}/${fileName}`);
+        const storageRef = ref(storage, `${activeChatData.id}/${fileToWrite}`);
 
         const uploadTask = uploadBytesResumable(storageRef, file);
 
