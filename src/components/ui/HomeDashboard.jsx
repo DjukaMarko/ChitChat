@@ -33,7 +33,7 @@ import { PageContext } from "../misc/PageContext";
 import { BookUser, GripVertical, LogOut, MessageSquareHeart } from "lucide-react";
 import { BeatLoader } from "react-spinners";
 import { AnimatePresence, motion } from "framer-motion";
-import { areGroupsEqual, refresh } from "@/lib/utils";
+import { areGroupsEqual, fetchDataFromLink, refresh } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
 import ShortUniqueId from "short-unique-id";
 
@@ -59,6 +59,7 @@ export default function HomeDashboard({ cookies }) {
             console.error(e);
         }
     };
+
 
     useEffect(() => {
         let snapshots_to_unmount = [];
@@ -139,7 +140,7 @@ export default function HomeDashboard({ cookies }) {
             await Promise.all(myUserData.groups.filter(group => group.length > 0).map(async group => {
 
                 const unsubscribe = onSnapshot(doc(db, "groups", group), async snapshot => {
-                    
+
                     if (!snapshot.exists()) {
                         console.log("Group document does not exist. It might have been deleted.");
                         return;
@@ -183,7 +184,7 @@ export default function HomeDashboard({ cookies }) {
         if (myGroups.length > 0) setChatSidebarLoading(false);
 
         if (Object.keys(activeChatData).length > 0 && myGroups.find(group => group.id === activeChatData.id) !== undefined) {
-            if(!areGroupsEqual(myGroups.find(group => group.id === activeChatData.id), activeChatData)) {
+            if (!areGroupsEqual(myGroups.find(group => group.id === activeChatData.id), activeChatData)) {
                 setActiveChatData(prevData => {
                     const foundGroup = myGroups.find(group => group.id === prevData.id);
                     return foundGroup;
@@ -401,8 +402,8 @@ export default function HomeDashboard({ cookies }) {
                 <Sidebar {...{ selectedSidebar, setSelectedSidebar, cookies, isSigningOut, handleSignOut }} />
                 <PanelGroup direction="horizontal" className="w-full h-full flex">
                     <Panel
-                        defaultSize={45}
-                        minSize={width > 900 ? 45 : 50}
+                        defaultSize={50}
+                        minSize={50}
                         className={` ${isChatOpened ? "hidden md:block" : "block"} flex border-r-[1px] border-secondaryC relative w-full flex-col justify-between h-full`}>
                         <div className="relative flex flex-col w-full h-full">
                             <div className="relative w-full h-[calc(100dvh-3rem)] md:h-[calc(100dvh)] flex flex-col p-3 overflow-y-scroll scrollbar-hide">

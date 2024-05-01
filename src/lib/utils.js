@@ -36,7 +36,7 @@ export const compareTimestamps = (obj1, obj2) => {
 
   if (isNaN(Date.parse(timestamp1)) || isNaN(Date.parse(timestamp2))) {
     return false;
-}
+  }
 
   // Get the object with the latest timestamp
   const latestObject = timestamp1.isAfter(timestamp2) ? obj1 : obj2;
@@ -44,14 +44,14 @@ export const compareTimestamps = (obj1, obj2) => {
 
   // Check if the latest timestamp is today
   if (latestTimestamp.isSame(now, 'day')) {
-      // Return hours and minutes
-      return latestTimestamp.format("h:mm A");
+    // Return hours and minutes
+    return latestTimestamp.format("h:mm A");
   }
 
   // Check if the latest timestamp is yesterday
   if (latestTimestamp.isSame(now.clone().subtract(1, 'day'), 'day')) {
-      // Return 'Yesterday' with hours and minutes
-      return "Yesterday, " + latestTimestamp.format("h:mm A");
+    // Return 'Yesterday' with hours and minutes
+    return "Yesterday, " + latestTimestamp.format("h:mm A");
   }
 
   // Return the whole date
@@ -67,7 +67,7 @@ export const isDifference = (obj1, obj2, textLength, index) => {
   const timeDifference = Math.abs(timestamp2.diff(timestamp1, 'minutes'));
 
   if (timeDifference > 15 || index === textLength - 1) {
-      return true;
+    return true;
   }
 
   return false;
@@ -89,12 +89,46 @@ export function areGroupsEqual(json1, json2) {
   const members2 = json2.members || [];
 
   if (members1.length !== members2.length) {
-      return false; // If lengths are different, arrays are not equal
+    return false; // If lengths are different, arrays are not equal
   }
 
-  if(json1.group_name !== json2.group_name) {
+  if (json1.group_name !== json2.group_name) {
     return false;
   }
 
   return true; // Arrays are equal
+}
+
+
+
+export const fetchDataFromLink = async (url) => {
+  try {
+    const response = await fetch(`https://link-preview-three.vercel.app/api/link-preview?url=${url}`);
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching metadata:', error);
+  }
+}
+export const firebaseStoragePattern = /^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^\/]+\/o\/([^?]+)\?alt=media&token=[^?]+$/;
+export const parseFirebaseStorageLink = (link) => {
+  // Try to match the link with the pattern
+  const match = link.match(firebaseStoragePattern);
+
+  if (match) {
+      // Extract the document name from the matched group
+      const [fullMatch, documentNameEncoded] = match;
+      const documentNameDecoded = decodeURIComponent(documentNameEncoded);
+      const parts = documentNameDecoded.split('/');
+      const fileName = parts.pop();
+
+      // Extract the extension
+      const extension = fileName.split('.').pop();
+
+      return { fileName, extension };
+  } else {
+      // If the link doesn't match the pattern, return null or handle it as needed
+      return null;
+  }
 }

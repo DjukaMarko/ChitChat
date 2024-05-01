@@ -45,6 +45,7 @@ export const ChatBox = ({ hideChat }) => {
     const [memberListWindow, setMemberListWindow] = useState(false);
     const [addMemberWindow, setMemberWindow] = useState(false);
     const [isGroupChangeNameOpened, setGroupChangeNameOpened] = useState(false);
+    const [fileSendProgress, setFileSendProgress] = useState(0);
 
     const members = activeChatData.members.length > 1 ? activeChatData.members.filter(item => item.userId !== myUserData.userId) : activeChatData.members;
     const isGroup = members.length > 1;
@@ -80,6 +81,7 @@ export const ChatBox = ({ hideChat }) => {
             (snapshot) => {
                 const progress =
                     Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                setFileSendProgress(progress);
             },
             (error) => {
                 console.error(error)
@@ -89,6 +91,7 @@ export const ChatBox = ({ hideChat }) => {
                     setTextValue(downloadURL);
                     setFileUploadInput(downloadURL);
                 });
+                setFileSendProgress(0);
             }
         );
     };
@@ -122,7 +125,7 @@ export const ChatBox = ({ hideChat }) => {
         const unsubscribe = onSnapshot(orderedQuery, (querySnapshot) => {
             setText([]);
             querySnapshot.forEach(async (doc) => {
-                setText(prevText => [...prevText, doc.data()])
+                setText(prevText => [...prevText, doc.data()]);
             });
             setMessageLoading(false);
         });
@@ -142,8 +145,6 @@ export const ChatBox = ({ hideChat }) => {
         if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
-
-        setText(prevText => [{ sentBy: auth.currentUser.uid, message: textValue }, ...prevText]);
 
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
             groups: arrayUnion(activeChatData.id),
@@ -170,11 +171,14 @@ export const ChatBox = ({ hideChat }) => {
 
         const messageRef = collection(doc(db, "groups", activeChatData.id), "messages");
 
-        addDoc(messageRef, {
+        const newMessageDoc = await addDoc(messageRef, {
+            id: "",
             message: textValue,
             sentAt: firestoreTimestamp(),
             sentBy: auth.currentUser.uid
         });
+
+        await updateDoc(newMessageDoc, { id: newMessageDoc.id });
 
         const groupRef = doc(db, 'groups', activeChatData.id);
 
@@ -364,7 +368,7 @@ export const ChatBox = ({ hideChat }) => {
                     onScroll={handleScroll}
                     className="w-full h-[calc(100dvh)] overflow-y-scroll scrollbar-hide flex flex-col-reverse py-6">
                     {members.length > 0 && text.map((m, index) => {
-                        return <ChatMessage key={index} side={m.sentBy == auth.currentUser.uid ? 1 : 2} text={text} m={m} index={index} isMessageSending={isMessageSending} />
+                        return <ChatMessage key={m.id} text={text} m={m} index={index} isMessageSending={index === 0 ? isMessageSending : false} />
                     })}
                     <div className={`w-full flex justify-center`}>
                         {(loadMoreDocs * 20) >= chatLength && !isMessageLoading && (
@@ -376,6 +380,7 @@ export const ChatBox = ({ hideChat }) => {
                     </div>
 
                 </div>
+                <p className="absolute bottom-16 left-1 text-textColor">{fileSendProgress > 0 && fileSendProgress + "%"}</p>
                 <div className="w-full border-t-[1px] border-secondaryC px-6 py-3 flex space-x-4">
                     <form className="flex space-x-6 items-center w-full">
                         <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleAttachClick}>
@@ -394,6 +399,7 @@ export const ChatBox = ({ hideChat }) => {
         </>
     )
 }
+
 const ModalListMembers = ({ setShown }) => {
     const { activeChatData } = useContext(PageContext);
     const members = [...activeChatData.members];

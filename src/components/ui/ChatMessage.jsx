@@ -1,12 +1,18 @@
 import { BeatLoader } from "react-spinners";
-import { compareTimestamps, isDifference, isValidUrl } from "@/lib/utils";
-import { useContext, useEffect, useState } from "react";
+import { compareTimestamps, fetchDataFromLink, firebaseStoragePattern, isDifference, isValidUrl, parseFirebaseStorageLink } from "@/lib/utils";
+import { memo, useContext, useEffect, useState } from "react";
 import { PageContext } from "../misc/PageContext";
 import { getDocs, query, where } from "firebase/firestore";
+import { auth } from "@/config/firebase";
+import { File } from "lucide-react";
 
-export const ChatMessage = ({ side, text, m, index, isMessageSending }) => {
+export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
     const { usersRef } = useContext(PageContext);
     const [userMessageData, setUserMessageData] = useState({});
+    const isSentByMe = m.sentBy === auth.currentUser.uid;
+    const [linkData, setLinkData] = useState({});
+
+
     useEffect(() => {
         let fetchUser = async () => {
             const q = query(usersRef, where("userId", "==", m.sentBy));
@@ -16,38 +22,73 @@ export const ChatMessage = ({ side, text, m, index, isMessageSending }) => {
         }
         fetchUser();
     }, []);
-    /*
-        side == 1 => Sent by me
-        side == 2 => Sent by other person
-        
-        The text state is reversed, that's why i'm comparing the index with the text.length - 1
-        i'm checking every message if it's the first message (last in text state because of the reversal). If it is, then
-        i'm showing the timestamp of the first message and if it is not the first message, 
-        i'm comparing the current message with the next message and showing the time difference between them.
-    */
+
+    useEffect(() => {
+        if (!m.message) return;
+
+        let loadLinkData = async () => {
+
+            if (isValidUrl(m.message)) {
+
+                if (firebaseStoragePattern.test(m.message)) {
+                    const parsedData = parseFirebaseStorageLink(m.message);
+                    setLinkData({ isFirebase: true, ...parsedData });
+                } else {
+                    const data = await fetchDataFromLink(m.message);
+                    if(data && data.result) {
+                        setLinkData({ isFirebase: false, ...data.result });
+                    }
+                }
+
+            }
+        }
+
+        loadLinkData();
+    }, []);
+
+
     return (
-        <div className={`flex flex-col ${side === 1 ? "items-end" : "items-start"} mt-[0.2rem] ${side === 2 && (text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy) && "mt-4"}`}>
+        <div className={`flex flex-col ${isSentByMe ? "items-end" : "items-start"} mt-[0.2rem] ${!isSentByMe && (text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy) && "mt-4"}`}>
             {/* show the time difference between the current message and the next message */}
             {isDifference(m, text[index === text.length - 1 ? index : index + 1], text.length, index) && (
                 <div className={`w-full flex justify-center my-3`}>
                     <p className={`text-xs text-textColor`}>{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1]) || ""}</p>
                 </div>
             )}
-            <div className={`${side === 1 ? "mr-4" : "ml-4 flex items-center space-x-3"} max-w-[80%]`}>
-                {side === 2 && ((text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy || index + 1 === text.length) && <img className="w-7 rounded-full" src={userMessageData?.photoUrl} />)}
-                <div className={`${(side === 1 ? (isMessageSending && index === 0 ? "bg-red-400" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ml-[2.5rem] py-[7px] px-3 rounded-lg break-all cursor-pointer relative`}>
+            <div className={`${isSentByMe ? "mr-4" : "ml-4 flex items-end space-x-3"} max-w-[70%] md:max-w-[95%] lg:max-w-[80%] 2xl:max-w-[80%] `}>
+                {!isSentByMe && ((text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy || index + 1 === text.length) && <img className="w-7 rounded-full" src={userMessageData?.photoUrl} />)}
+                <div className={`${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ml-[2.5rem] ${Object.keys(linkData).length === 0 && "py-[7px] px-3"} rounded-lg break-words cursor-pointer relative`}>
+
                     {isValidUrl(m.message) ? (
-                        <a href={m.message.startsWith("http") ? m.message : `https://${m.message}`} className={`${side === 1 ? "text-white" : "text-black"} underline text-xs md:text-sm`} target="_blank" rel="noopener noreferrer">
-                            {m.message}
-                        </a>
+                        linkData && (linkData.siteData ? ( // Check if linkData is not empty and contains siteData
+                            <a target="_blank" href={linkData.siteData?.url} className="flex flex-col shadow-lg 2xl:w-72">
+                                <img className="rounded-t-sm" src={linkData.siteData?.image} />
+                                <p className={`${isSentByMe ? "text-white" : "text-textColor"} text-sm underline p-2`}>{linkData.siteData?.title}</p>
+                            </a>
+                        ) : linkData.isFirebase ? (
+                            linkData.extension === "png" || linkData.extension === "jpg" ? (
+                                <a target="_blank" href={m.message}><img className="rounded-sm w-48" src={m.message} /></a>
+                            ) : (
+                                <a target="_blank" href={m.message} className={`p-2 ${isSentByMe ? "text-white" : "text-textColor"} flex items-center`}>
+                                    <File className="mr-2" size={18} />
+                                    <p className="underline text-sm">{linkData.fileName}</p>
+                                </a>
+                            )
+                        ) : (
+                            <a href={m.message.startsWith("http") ? m.message : `https://${m.message}`} className={`${isSentByMe ? "text-white" : "text-black"} underline text-sm`} target="_blank" rel="noopener noreferrer">
+                                {m.message}
+                            </a>
+                        )
+                        )
                     ) : (
-                        <p className={`${side === 1 ? "text-white" : "text-textColor"} text-sm`}>{m.message}</p>
+                        <p className={`${isSentByMe ? "text-white" : "text-textColor"} text-sm`}>{m.message}</p>
                     )}
-                    {isMessageSending && index === 0 &&
-                        <div className={`absolute -bottom-6 right-0`}><BeatLoader size={8} color="#c91e1e" /></div>
+
+                    {isMessageSending && isSentByMe &&
+                        <div className={`absolute -bottom-6 right-0`}><BeatLoader className="w-max" size={8} color="#c91e1e" /></div>
                     }
                 </div>
             </div>
         </div>
     )
-}
+})
