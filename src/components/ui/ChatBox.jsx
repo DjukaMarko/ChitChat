@@ -26,6 +26,7 @@ import { Button } from "./button";
 import WarningModalPrint from "./WarningModalPrint";
 import { hasOnlyBlankSpaces } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
+import uuid4 from "uuid4";
 
 
 export const ChatBox = ({ hideChat }) => {
@@ -73,7 +74,11 @@ export const ChatBox = ({ hideChat }) => {
         const file = event.target.files[0];
         if (!file) return;
 
-        const storageRef = ref(storage, `${activeChatData.id}/${file.name}`);
+        const fileExtension = file.name.split('.').pop();
+        const allowedImages = ["jpg", "jpeg", "png"];
+        const fileName = allowedImages.includes(fileExtension) ? uuid4() + "." + fileExtension : file.name;
+
+        const storageRef = ref(storage, `${activeChatData.id}/${fileName}`);
 
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -191,11 +196,11 @@ export const ChatBox = ({ hideChat }) => {
                 const newNumMessages = currentNumMessages + 1;
 
                 // Update the numMessages field in the document
-                transaction.update(groupRef, { 
+                transaction.update(groupRef, {
                     numMessages: newNumMessages,
                     lastMessage: textValue,
                     lastMessageSent: firestoreTimestamp(),
-                    lastMessageSentBy: auth.currentUser.uid, 
+                    lastMessageSentBy: auth.currentUser.uid,
                 });
             });
 
