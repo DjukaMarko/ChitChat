@@ -1,16 +1,18 @@
 import { BeatLoader, ClipLoader } from "react-spinners";
 import { compareTimestamps, fetchDataFromLink, firebaseStoragePattern, isDifference, isValidUrl, parseFirebaseStorageLink, possibleImageFormat } from "@/lib/utils";
-import { memo, useContext, useEffect, useState } from "react";
+import { memo, useContext, useEffect, useRef, useState } from "react";
 import { PageContext } from "../misc/PageContext";
 import { getDocs, query, where } from "firebase/firestore";
 import { auth } from "@/config/firebase";
 import { File } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 
 export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
     const { usersRef } = useContext(PageContext);
     const [userMessageData, setUserMessageData] = useState({});
     const isSentByMe = m.sentBy === auth.currentUser.uid;
     const [linkData, setLinkData] = useState({});
+    const { ref, inView } = useInView();
 
 
     useEffect(() => {
@@ -28,27 +30,27 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
 
         let loadLinkData = async () => {
 
-            if (isValidUrl(m.message)) {
-
+            if (isValidUrl(m.message) && Object.keys(linkData).length === 0) {
                 if (firebaseStoragePattern.test(m.message)) {
                     const parsedData = parseFirebaseStorageLink(m.message);
                     setLinkData({ isFirebase: true, ...parsedData });
                 } else {
                     const data = await fetchDataFromLink(m.message);
-                    if(data && data.result) {
+                    if (data && data.result) {
                         setLinkData({ isFirebase: false, ...data.result });
                     }
                 }
 
             }
         }
-
-        loadLinkData();
-    }, []);
+        if(inView) {
+            loadLinkData();
+        }
+    }, [inView]);
 
 
     return (
-        <div className={`flex flex-col ${isSentByMe ? "items-end" : "items-start"} mt-[0.2rem] ${!isSentByMe && (text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy) && "mt-4"}`}>
+        <div ref={ref} className={`flex flex-col ${isSentByMe ? "items-end" : "items-start"} mt-[0.2rem] ${!isSentByMe && (text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy) && "mt-4"}`}>
             {/* show the time difference between the current message and the next message */}
             {isDifference(m, text[index === text.length - 1 ? index : index + 1], text.length, index) && (
                 <div className={`w-full flex justify-center my-3`}>

@@ -49,7 +49,6 @@ export const ChatBox = ({ hideChat }) => {
     const [addMemberWindow, setMemberWindow] = useState(false);
     const [isGroupChangeNameOpened, setGroupChangeNameOpened] = useState(false);
     const [fileSendProgress, setFileSendProgress] = useState(0);
-    const [showScrollWarning, setShowScrollWarning] = useState(false);
 
     const members = activeChatData.members.length > 1 ? activeChatData.members.filter(item => item.userId !== myUserData.userId) : activeChatData.members;
     const isGroup = members.length > 1;
