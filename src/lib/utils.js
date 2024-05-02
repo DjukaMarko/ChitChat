@@ -136,12 +136,10 @@ export const parseFirebaseStorageLink = (link) => {
 
 export const possibleImageFormat = ["jpg", "png", "jpeg"];
 
-
 export const scrollToBottom = (ref) => {
   const scrollContainer = ref.current;
   if (scrollContainer) {
     const isScrolledToBottom = scrollContainer.scrollHeight - scrollContainer.clientHeight <= scrollContainer.scrollTop + 1;
-
     if (!isScrolledToBottom) {
       scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }

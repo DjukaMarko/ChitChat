@@ -19,14 +19,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronLeft, CirclePlus, ContactRound, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus, X } from "lucide-react";
+import { ChevronLeft, CirclePlus, ContactRound, CornerRightDown, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus, X } from "lucide-react";
 import { PageContext } from "../misc/PageContext";
 import Modal from "./Modal";
 import { Button } from "./button";
 import WarningModalPrint from "./WarningModalPrint";
 import { hasOnlyBlankSpaces, scrollToBottom } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
-import uuid4 from "uuid4";
 import ShortUniqueId from "short-unique-id";
 import { Progress } from "./progress";
 import imageCompression from 'browser-image-compression';
@@ -50,6 +49,7 @@ export const ChatBox = ({ hideChat }) => {
     const [addMemberWindow, setMemberWindow] = useState(false);
     const [isGroupChangeNameOpened, setGroupChangeNameOpened] = useState(false);
     const [fileSendProgress, setFileSendProgress] = useState(0);
+    const [showScrollWarning, setShowScrollWarning] = useState(false);
 
     const members = activeChatData.members.length > 1 ? activeChatData.members.filter(item => item.userId !== myUserData.userId) : activeChatData.members;
     const isGroup = members.length > 1;
@@ -131,7 +131,7 @@ export const ChatBox = ({ hideChat }) => {
 
     useEffect(() => {
         scrollToBottom(scrollContainerRef);
-    }, [activeChatData, text]);
+    }, [activeChatData]);
 
     useEffect(() => {
         setMessageLoading(true);
@@ -381,7 +381,7 @@ export const ChatBox = ({ hideChat }) => {
                 <div
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="w-full h-[calc(100dvh)] overflow-y-scroll scrollbar-hide flex flex-col-reverse py-6">
+                    className="w-full h-[calc(100dvh)] overflow-y-scroll scrollbar-hide flex flex-col-reverse pb-6">
                     {members.length > 0 && text.map((m, index) => {
                         return <ChatMessage key={m.id} text={text} m={m} index={index} isMessageSending={index === 0 ? isMessageSending : false} />
                     })}
