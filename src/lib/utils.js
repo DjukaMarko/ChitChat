@@ -132,3 +132,6 @@ export const parseFirebaseStorageLink = (link) => {
       return null;
   }
 }
+
+
+export const possibleImageFormat = ["jpg", "png", "jpeg"];

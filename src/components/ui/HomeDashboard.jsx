@@ -187,7 +187,7 @@ export default function HomeDashboard({ cookies }) {
             if (!areGroupsEqual(myGroups.find(group => group.id === activeChatData.id), activeChatData)) {
                 setActiveChatData(prevData => {
                     const foundGroup = myGroups.find(group => group.id === prevData.id);
-                    return foundGroup;
+                    return {...prevData, members: foundGroup.members, group_name: foundGroup.group_name};
                 });
             }
         }

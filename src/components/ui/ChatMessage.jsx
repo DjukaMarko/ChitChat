@@ -1,5 +1,5 @@
-import { BeatLoader } from "react-spinners";
-import { compareTimestamps, fetchDataFromLink, firebaseStoragePattern, isDifference, isValidUrl, parseFirebaseStorageLink } from "@/lib/utils";
+import { BeatLoader, ClipLoader } from "react-spinners";
+import { compareTimestamps, fetchDataFromLink, firebaseStoragePattern, isDifference, isValidUrl, parseFirebaseStorageLink, possibleImageFormat } from "@/lib/utils";
 import { memo, useContext, useEffect, useState } from "react";
 import { PageContext } from "../misc/PageContext";
 import { getDocs, query, where } from "firebase/firestore";
@@ -55,19 +55,19 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
                     <p className={`text-xs text-textColor`}>{compareTimestamps(m, text[index === text.length - 1 ? index : index + 1]) || ""}</p>
                 </div>
             )}
-            <div className={`${isSentByMe ? "mr-4" : "ml-4 flex items-end space-x-3"} max-w-[70%] md:max-w-[95%] lg:max-w-[80%] 2xl:max-w-[80%] `}>
-                {!isSentByMe && ((text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy || index + 1 === text.length) && <img className="w-7 rounded-full" src={userMessageData?.photoUrl} />)}
-                <div className={`${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ml-[2.5rem] ${Object.keys(linkData).length === 0 && "py-[7px] px-3"} rounded-lg cursor-pointer relative`}>
+            <div className={`${isSentByMe ? "mr-2" : "ml-2 flex items-end space-x-2"} max-w-[70%] md:max-w-[95%] lg:max-w-[80%] 2xl:max-w-[80%] `}>
+                {!isSentByMe && ((text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy || index + 1 === text.length) && <img className="w-6 rounded-full" src={userMessageData?.photoUrl} />)}
+                <div className={`${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ml-[2rem] ${Object.keys(linkData).length === 0 && "py-[7px] px-3"} rounded-lg cursor-pointer relative`}>
 
                     {isValidUrl(m.message) ? (
                         linkData && (linkData.siteData ? ( // Check if linkData is not empty and contains siteData
-                            <a target="_blank" href={linkData.siteData?.url} className="flex flex-col shadow-lg 2xl:w-72">
-                                <img className="rounded-t-sm" src={linkData.siteData?.image} />
+                            <a target="_blank" href={linkData.siteData?.url} className="flex flex-col shadow-lg">
+                                <img className="rounded-t-sm w-full max-h-96 object-cover" src={linkData.siteData?.image} />
                                 <p className={`${isSentByMe ? "text-white" : "text-textColor"} text-sm underline p-2 break-words`}>{linkData.siteData?.title}</p>
                             </a>
                         ) : linkData.isFirebase ? (
-                            linkData.extension === "png" || linkData.extension === "jpg" ? (
-                                <a target="_blank" href={m.message}><img className="rounded-sm w-48" src={m.message} /></a>
+                            possibleImageFormat.includes(linkData.extension.toLowerCase()) ? (
+                                <a target="_blank" href={m.message}><img className="rounded-sm w-full max-h-96 object-cover" src={m.message} /></a>
                             ) : (
                                 <a target="_blank" href={m.message} className={`p-2 ${isSentByMe ? "text-white" : "text-textColor"} flex items-center`}>
                                     <File className="mr-2" size={18} />
@@ -85,7 +85,7 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
                     )}
 
                     {isMessageSending && isSentByMe &&
-                        <div className={`absolute -bottom-6 right-0`}><BeatLoader className="w-max" size={8} color="#c91e1e" /></div>
+                        <div className={`absolute -bottom-6 right-0`}><ClipLoader className="w-max" size={10} color="#c91e1e" /></div>
                     }
                 </div>
             </div>

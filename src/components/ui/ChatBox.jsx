@@ -4,7 +4,7 @@ import { ref, getDownloadURL, uploadBytesResumable, listAll, deleteObject } from
 import newchat from "@/../public/newchat.svg"
 import { addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, runTransaction, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
-import { BeatLoader } from "react-spinners";
+import { BarLoader, BeatLoader } from "react-spinners";
 import { ChatMessage } from "./ChatMessage";
 import { motion } from "framer-motion";
 import emptylist from "@/../public/404illustration.svg"
@@ -77,17 +77,16 @@ export const ChatBox = ({ hideChat }) => {
         const { randomUUID } = new ShortUniqueId({ length: 4 });
         const fileName = file.name.split('.').shift();
         const fileExtension = file.name.split('.').pop();
-        const fileToWrite = fileName + "(" + randomUUID() + ")" + "."+ fileExtension;
+        const fileToWrite = fileName + "(" + randomUUID() + ")" + "." + fileExtension;
 
         const storageRef = ref(storage, `${activeChatData.id}/${fileToWrite}`);
-
         const uploadTask = uploadBytesResumable(storageRef, file);
-
         uploadTask.on("state_changed",
             (snapshot) => {
                 const progress =
                     Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
                 setFileSendProgress(progress);
+
             },
             (error) => {
                 console.error(error)
@@ -148,8 +147,14 @@ export const ChatBox = ({ hideChat }) => {
     const sendMessage = async () => {
         if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
         setMessageSending(true);
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+
+        const scrollContainer = scrollContainerRef.current;
+        if (scrollContainer) {
+            const isScrolledToBottom = scrollContainer.scrollHeight - scrollContainer.clientHeight <= scrollContainer.scrollTop + 1;
+
+            if (!isScrolledToBottom) {
+                scrollContainer.scrollTop = scrollContainer.scrollHeight;
+            }
         }
 
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
@@ -365,7 +370,7 @@ export const ChatBox = ({ hideChat }) => {
                     </div>
                     {isMessageLoading &&
                         <div className="absolute bg-backgroundTheme border-t-[1px] border-secondaryC p-2 w-full flex justify-center items-center">
-                            <BeatLoader size={10} color="#c91e1e" />
+                            <BarLoader size={10} color="#c91e1e" />
                         </div>
                     }
                 </div>
