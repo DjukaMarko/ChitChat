@@ -440,7 +440,7 @@ export default function HomeDashboard({ cookies }) {
                             <GripVertical color={themeMode === "dark" ? "#fff" : "#000"} className="w-4 h-4" />
                         </div>
                     </PanelResizeHandle>
-                    <Panel minSize={35} className={`w-full h-full ${(!isChatOpened && "hidden md:flex justify-center items-center")}`}>
+                    <Panel minSize={width < 900 ? 45 : 40} className={`w-full h-full ${(!isChatOpened && "hidden md:flex justify-center items-center")}`}>
 
                         <AnimatePresence>
                             {isChatOpened && (

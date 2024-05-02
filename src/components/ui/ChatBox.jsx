@@ -24,11 +24,12 @@ import { PageContext } from "../misc/PageContext";
 import Modal from "./Modal";
 import { Button } from "./button";
 import WarningModalPrint from "./WarningModalPrint";
-import { hasOnlyBlankSpaces } from "@/lib/utils";
+import { hasOnlyBlankSpaces, scrollToBottom } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
 import uuid4 from "uuid4";
 import ShortUniqueId from "short-unique-id";
 import { Progress } from "./progress";
+import imageCompression from 'browser-image-compression';
 
 
 export const ChatBox = ({ hideChat }) => {
@@ -72,34 +73,46 @@ export const ChatBox = ({ hideChat }) => {
         sendFiles();
     }, [fileUploadInput]);
 
-    const handleFileUpload = (event) => {
-        const file = event.target.files[0];
+    const handleFileUpload = async (event) => {
+        let file = event.target.files[0];
         if (!file) return;
         const { randomUUID } = new ShortUniqueId({ length: 4 });
         const fileName = file.name.split('.').shift();
         const fileExtension = file.name.split('.').pop();
         const fileToWrite = fileName + "(" + randomUUID() + ")" + "." + fileExtension;
-
         const storageRef = ref(storage, `${activeChatData.id}/${fileToWrite}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-        uploadTask.on("state_changed",
-            (snapshot) => {
-                const progress =
-                    Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                setFileSendProgress(progress);
 
-            },
-            (error) => {
-                console.error(error)
-            },
-            () => {
-                getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
-                    setTextValue(downloadURL);
-                    setFileUploadInput(downloadURL);
+        try {
+            if (file.type.startsWith('image/')) {
+                file = await imageCompression(file, {
+                    maxSizeMB: 1, // Maximum size of the compressed image in MB
+                    maxWidthOrHeight: 1920, // Maximum width or height of the compressed image
+                    useWebWorker: true // Use web worker for faster compression
                 });
-                setFileSendProgress(0);
             }
-        );
+
+            const uploadTask = uploadBytesResumable(storageRef, file);
+            uploadTask.on("state_changed",
+                (snapshot) => {
+                    const progress =
+                        Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                    setFileSendProgress(progress);
+
+                },
+                (error) => {
+                    console.error(error)
+                },
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+                        setTextValue(downloadURL);
+                        setFileUploadInput(downloadURL);
+                    });
+                    setFileSendProgress(0);
+                }
+            );
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     const handleAttachClick = (e) => {
@@ -116,10 +129,7 @@ export const ChatBox = ({ hideChat }) => {
 
 
     useEffect(() => {
-        if (scrollContainerRef.current) {
-            const scrollContainer = scrollContainerRef.current;
-            scrollContainer.scrollTop = scrollContainer.scrollHeight;
-        }
+        scrollToBottom(scrollContainerRef);
     }, [activeChatData]);
 
     useEffect(() => {
@@ -149,14 +159,7 @@ export const ChatBox = ({ hideChat }) => {
         if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
         setMessageSending(true);
 
-        const scrollContainer = scrollContainerRef.current;
-        if (scrollContainer) {
-            const isScrolledToBottom = scrollContainer.scrollHeight - scrollContainer.clientHeight <= scrollContainer.scrollTop + 1;
-
-            if (!isScrolledToBottom) {
-                scrollContainer.scrollTop = scrollContainer.scrollHeight;
-            }
-        }
+        scrollToBottom(scrollContainerRef);
 
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
             groups: arrayUnion(activeChatData.id),

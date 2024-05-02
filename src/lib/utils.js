@@ -117,21 +117,33 @@ export const parseFirebaseStorageLink = (link) => {
   const match = link.match(firebaseStoragePattern);
 
   if (match) {
-      // Extract the document name from the matched group
-      const [fullMatch, documentNameEncoded] = match;
-      const documentNameDecoded = decodeURIComponent(documentNameEncoded);
-      const parts = documentNameDecoded.split('/');
-      const fileName = parts.pop();
+    // Extract the document name from the matched group
+    const [fullMatch, documentNameEncoded] = match;
+    const documentNameDecoded = decodeURIComponent(documentNameEncoded);
+    const parts = documentNameDecoded.split('/');
+    const fileName = parts.pop();
 
-      // Extract the extension
-      const extension = fileName.split('.').pop();
+    // Extract the extension
+    const extension = fileName.split('.').pop();
 
-      return { fileName, extension };
+    return { fileName, extension };
   } else {
-      // If the link doesn't match the pattern, return null or handle it as needed
-      return null;
+    // If the link doesn't match the pattern, return null or handle it as needed
+    return null;
   }
 }
 
 
 export const possibleImageFormat = ["jpg", "png", "jpeg"];
+
+
+export const scrollToBottom = (ref) => {
+  const scrollContainer = ref.current;
+  if (scrollContainer) {
+    const isScrolledToBottom = scrollContainer.scrollHeight - scrollContainer.clientHeight <= scrollContainer.scrollTop + 1;
+
+    if (!isScrolledToBottom) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+  }
+}
