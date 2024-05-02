@@ -28,6 +28,7 @@ import { hasOnlyBlankSpaces } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
 import uuid4 from "uuid4";
 import ShortUniqueId from "short-unique-id";
+import { Progress } from "./progress";
 
 
 export const ChatBox = ({ hideChat }) => {
@@ -391,7 +392,11 @@ export const ChatBox = ({ hideChat }) => {
                     </div>
 
                 </div>
-                <p className="absolute bottom-16 left-1 text-textColor">{fileSendProgress > 0 && fileSendProgress + "%"}</p>
+                {fileSendProgress > 0 &&
+                    <div className="w-full p-2">
+                        <Progress value={fileSendProgress} />
+                    </div>
+                }
                 <div className="w-full border-t-[1px] border-secondaryC px-6 py-3 flex space-x-4">
                     <form className="flex space-x-6 items-center w-full">
                         <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleAttachClick}>
