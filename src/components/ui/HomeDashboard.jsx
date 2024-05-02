@@ -436,7 +436,7 @@ export default function HomeDashboard({ cookies }) {
                         </div>
                     </Panel>
                     <PanelResizeHandle className="items-center hidden md:flex relative">
-                        <div className="absolute -right-4 cursor-pointer bg-backgroundTheme border-[1px] border-secondaryC p-2 rounded-full w-8 h-8 z-[1] flex items-center justify-center">
+                        <div className="absolute -right-[0.9rem] cursor-pointer bg-backgroundTheme border-[1px] border-secondaryC p-1 rounded-full w-7 h-7 z-[1] flex items-center justify-center">
                             <GripVertical color={themeMode === "dark" ? "#fff" : "#000"} className="w-4 h-4" />
                         </div>
                     </PanelResizeHandle>
