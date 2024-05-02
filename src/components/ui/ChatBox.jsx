@@ -68,6 +68,7 @@ export const ChatBox = ({ hideChat }) => {
         if (fileUploadInput === "") return;
 
         let sendFiles = async () => {
+            console.log("heyy")
             await sendMessage();
         };
         sendFiles();
@@ -130,7 +131,7 @@ export const ChatBox = ({ hideChat }) => {
 
     useEffect(() => {
         scrollToBottom(scrollContainerRef);
-    }, [activeChatData]);
+    }, [activeChatData, text]);
 
     useEffect(() => {
         setMessageLoading(true);
@@ -158,7 +159,6 @@ export const ChatBox = ({ hideChat }) => {
     const sendMessage = async () => {
         if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
         setMessageSending(true);
-
         scrollToBottom(scrollContainerRef);
 
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
