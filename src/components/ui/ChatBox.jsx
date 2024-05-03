@@ -135,7 +135,7 @@ export const ChatBox = ({ hideChat }) => {
 
     useEffect(() => {
         setMessageLoading(true);
-        let threshold = (loadMoreDocs * 20);
+        let threshold = (loadMoreDocs * 25);
 
         const subcollectionRef = collection(doc(db, "groups", activeChatData.id), "messages");
         const orderedQuery = query(subcollectionRef, orderBy('sentAt', 'desc'), limit(threshold));

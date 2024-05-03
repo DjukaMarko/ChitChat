@@ -137,7 +137,7 @@ export const parseFirebaseStorageLink = (link) => {
 export const possibleImageFormat = ["jpg", "png", "jpeg"];
 
 export const isScrolledToBottom = (element) => {
-  if(element.current) {
+  if (element.current) {
     return Math.abs(element.current.scrollTop) <= 1;
   }
 }
@@ -145,8 +145,17 @@ export const isScrolledToBottom = (element) => {
 export const scrollToBottom = async (ref) => {
   const scrollContainer = ref.current;
   if (scrollContainer) {
-    if(!isScrolledToBottom(ref)) {
+    if (!isScrolledToBottom(ref)) {
       scrollContainer.scrollTop = 0;
     }
   }
+
+  await new Promise((resolve) => {
+    scrollContainer.addEventListener('scroll', function checkScroll() {
+      if (scrollContainer.scrollTop === 0) {
+        scrollContainer.removeEventListener('scroll', checkScroll);
+        resolve();
+      }
+    });
+  });
 }
