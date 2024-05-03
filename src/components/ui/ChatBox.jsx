@@ -232,7 +232,6 @@ export const ChatBox = ({ hideChat }) => {
     const handleScroll = () => {
         console.log(isScrolledToBottom(scrollContainerRef));
         console.log(scrollContainerRef.current.scrollTop);
-        if(scrollContainerRef.current.scrollTop > 0) scrollContainerRef.current.scrollTop = 0;
 
         const container = scrollContainerRef.current;
         const scrolledFromTop = container.scrollTop;
