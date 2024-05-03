@@ -24,7 +24,7 @@ import { PageContext } from "../misc/PageContext";
 import Modal from "./Modal";
 import { Button } from "./button";
 import WarningModalPrint from "./WarningModalPrint";
-import { hasOnlyBlankSpaces, scrollToBottom } from "@/lib/utils";
+import { hasOnlyBlankSpaces, isScrolledToBottom, scrollToBottom } from "@/lib/utils";
 import { ThemeProvider } from "../misc/ThemeProvider";
 import ShortUniqueId from "short-unique-id";
 import { Progress } from "./progress";
@@ -380,7 +380,7 @@ export const ChatBox = ({ hideChat }) => {
                 <div
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="w-full h-[calc(100dvh)] overflow-y-scroll scrollbar-hide flex flex-col-reverse pb-6">
+                    className="w-full h-full overflow-y-scroll scrollbar-hide flex flex-col-reverse pb-6">
                     {members.length > 0 && text.map((m, index) => {
                         return <ChatMessage key={m.id} text={text} m={m} index={index} isMessageSending={index === 0 ? isMessageSending : false} />
                     })}

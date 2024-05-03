@@ -1,6 +1,6 @@
-import { BeatLoader, ClipLoader } from "react-spinners";
+import { ClipLoader } from "react-spinners";
 import { compareTimestamps, fetchDataFromLink, firebaseStoragePattern, isDifference, isValidUrl, parseFirebaseStorageLink, possibleImageFormat } from "@/lib/utils";
-import { memo, useContext, useEffect, useRef, useState } from "react";
+import { memo, useContext, useEffect, useState } from "react";
 import { PageContext } from "../misc/PageContext";
 import { getDocs, query, where } from "firebase/firestore";
 import { auth } from "@/config/firebase";
@@ -59,7 +59,7 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
             )}
             <div className={`${isSentByMe ? "mr-2" : "ml-2 flex items-end space-x-2"} max-w-[70%] md:max-w-[95%] lg:max-w-[80%] 2xl:max-w-[80%] `}>
                 {!isSentByMe && ((text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy || index + 1 === text.length) && <img className="w-6 rounded-full" src={userMessageData?.photoUrl} />)}
-                <div className={`${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ml-[2rem] ${Object.keys(linkData).length === 0 && "py-[7px] px-3"} rounded-lg cursor-pointer relative`}>
+                <div className={`${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ${!isSentByMe && "ml-[2rem]"} ${Object.keys(linkData).length === 0 && "py-[7px] px-3"} rounded-lg cursor-pointer relative`}>
 
                     {isValidUrl(m.message) ? (
                         linkData && (linkData.siteData ? ( // Check if linkData is not empty and contains siteData
