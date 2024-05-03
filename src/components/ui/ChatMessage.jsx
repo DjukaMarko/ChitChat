@@ -61,7 +61,7 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
             )}
             <div className={`${isSentByMe ? "mr-2" : "ml-2 flex items-end space-x-2"} max-w-[70%] md:max-w-[95%] lg:max-w-[80%] 2xl:max-w-[80%] `}>
                 {!isSentByMe && ((text[index + 1 === text.length ? index : index + 1]?.sentBy !== m?.sentBy || index + 1 === text.length) && <img className="w-6 rounded-full" src={userMessageData?.photoUrl} />)}
-                <div className={`${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-red-800 hover:bg-red-700") : "bg-secondaryC hover:bg-secondaryCHover")} ${!isSentByMe && "ml-[2rem]"} ${Object.keys(linkData).length === 0 && "py-[7px] px-3"} rounded-lg cursor-pointer relative`}>
+                <div className={`rounded-xl ${(isSentByMe ? (isMessageSending && index === 0 ? "bg-red-600" : "bg-primaryC hover:bg-primaryCHover") : "bg-secondaryC hover:bg-secondaryCHover")} ${Object.keys(linkData).length === 0 && "py-[6px] px-3"} ${!isSentByMe && "ml-[2rem]"} cursor-pointer relative`}>
 
                     {isValidUrl(m.message) ? (
                         linkData && (linkData.siteData ? ( // Check if linkData is not empty and contains siteData
@@ -73,8 +73,10 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
                             possibleImageFormat.includes(linkData.extension.toLowerCase()) ? (
                                 <a target="_blank" href={m.message}><img className="rounded-sm w-full max-h-96 object-cover" src={m.message} /></a>
                             ) : (
-                                <a target="_blank" href={m.message} className={`p-2 ${isSentByMe ? "text-white" : "text-textColor"} flex items-center`}>
-                                    <File className="mr-2" size={18} />
+                                <a target="_blank" href={m.message} className={`${isSentByMe ? "text-white" : "text-textColor"} flex items-center p-2`}>
+                                    <div className="pr-2">
+                                        <File size={20} />
+                                    </div>
                                     <p className="underline text-sm break-all">{linkData.fileName}</p>
                                 </a>
                             )

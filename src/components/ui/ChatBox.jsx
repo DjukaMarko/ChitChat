@@ -19,7 +19,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronLeft, CirclePlus, ContactRound, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus } from "lucide-react";
+import { ChevronLeft, CirclePlus, ContactRound, CornerDownRight, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus } from "lucide-react";
 import { PageContext } from "../misc/PageContext";
 import Modal from "./Modal";
 import { Button } from "./button";
@@ -49,6 +49,7 @@ export const ChatBox = ({ hideChat }) => {
     const [addMemberWindow, setMemberWindow] = useState(false);
     const [isGroupChangeNameOpened, setGroupChangeNameOpened] = useState(false);
     const [fileSendProgress, setFileSendProgress] = useState(0);
+    const [isAwayFromBottom, setAwayFromBottom] = useState(false);
 
     const members = activeChatData.members.length > 1 ? activeChatData.members.filter(item => item.userId !== myUserData.userId) : activeChatData.members;
     const isGroup = members.length > 1;
@@ -237,6 +238,12 @@ export const ChatBox = ({ hideChat }) => {
         const scrolledFromTop = container.scrollTop;
         const maxScrollHeight = container.scrollHeight - container.clientHeight;
 
+        if(!isScrolledToBottom(scrollContainerRef)) {
+            setAwayFromBottom(true);
+        } else {
+            setAwayFromBottom(false);
+        }
+
         if ((Math.abs(scrolledFromTop)) >= maxScrollHeight - 2) {
 
             setLoadMoreDocs(prevDocs => {
@@ -384,7 +391,7 @@ export const ChatBox = ({ hideChat }) => {
                 <div
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="w-full h-full overflow-y-scroll scrollbar-hide flex flex-col-reverse pb-6">
+                    className="w-full h-full overflow-y-scroll scrollbar-hide scroll-smooth flex flex-col-reverse pb-6">
                     {members.length > 0 && text.map((m, index) => {
                         return <ChatMessage key={m.id} text={text} m={m} index={index} isMessageSending={index === 0 ? isMessageSending : false} />
                     })}
@@ -403,6 +410,9 @@ export const ChatBox = ({ hideChat }) => {
                         <Progress value={fileSendProgress} />
                     </div>
                 }
+                {isAwayFromBottom && <div onClick={() => {
+                    scrollToBottom(scrollContainerRef);
+                }} className="absolute bottom-20 left-4 text-textColor bg-primaryC hover:bg-primaryCHover p-2 rounded-full cursor-pointer"><CornerDownRight color="#fff" /></div> }
                 <div className="w-full border-t-[1px] border-secondaryC px-6 py-3 flex space-x-4">
                     <form className="flex space-x-6 items-center w-full">
                         <motion.a whileHover={{ scale: 1.05 }} className="cursor-pointer" onClick={handleAttachClick}>
