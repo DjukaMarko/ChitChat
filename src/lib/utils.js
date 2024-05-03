@@ -142,7 +142,7 @@ export const isScrolledToBottom = (element) => {
   }
 }
 
-export const scrollToBottom = (ref) => {
+export const scrollToBottom = async (ref) => {
   const scrollContainer = ref.current;
   if (scrollContainer) {
     if(!isScrolledToBottom(ref)) {

@@ -159,7 +159,7 @@ export const ChatBox = ({ hideChat }) => {
     const sendMessage = async () => {
         if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
         setMessageSending(true);
-        scrollToBottom(scrollContainerRef);
+        await scrollToBottom(scrollContainerRef);
 
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
             groups: arrayUnion(activeChatData.id),
