@@ -2,9 +2,9 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { auth, db, storage } from "@/config/firebase"
 import { ref, getDownloadURL, uploadBytesResumable, listAll, deleteObject } from "firebase/storage";
 import newchat from "@/../public/newchat.svg"
-import { addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, increment, limit, onSnapshot, orderBy, query, runTransaction, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, runTransaction, updateDoc, where } from "firebase/firestore";
 import { serverTimestamp as firestoreTimestamp } from "firebase/firestore";
-import { BarLoader, BeatLoader } from "react-spinners";
+import { BarLoader } from "react-spinners";
 import { ChatMessage } from "./ChatMessage";
 import { motion } from "framer-motion";
 import emptylist from "@/../public/404illustration.svg"
@@ -19,7 +19,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronLeft, CirclePlus, ContactRound, CornerRightDown, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus, X } from "lucide-react";
+import { ChevronLeft, CirclePlus, ContactRound, Ellipsis, Images, Paperclip, SendHorizontal, Trash, UserRoundPlus } from "lucide-react";
 import { PageContext } from "../misc/PageContext";
 import Modal from "./Modal";
 import { Button } from "./button";
@@ -229,6 +229,10 @@ export const ChatBox = ({ hideChat }) => {
     }
 
     const handleScroll = () => {
+        console.log(isScrolledToBottom(scrollContainerRef));
+        console.log(scrollContainerRef.current.scrollTop);
+        if(scrollContainerRef.current.scrollTop > 0) scrollContainerRef.current.scrollTop = 0;
+
         const container = scrollContainerRef.current;
         const scrolledFromTop = container.scrollTop;
         const maxScrollHeight = container.scrollHeight - container.clientHeight;

@@ -5,7 +5,9 @@ import { PageContext } from "../misc/PageContext";
 import { getDocs, query, where } from "firebase/firestore";
 import { auth } from "@/config/firebase";
 import { File } from "lucide-react";
+import messagedelivered from "@/../public/messagedelivered.png"
 import { useInView } from "react-intersection-observer";
+import { motion } from "framer-motion"
 
 export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
     const { usersRef } = useContext(PageContext);
@@ -88,6 +90,9 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
 
                     {isMessageSending && isSentByMe &&
                         <div className={`absolute -bottom-6 right-0`}><ClipLoader className="w-max" size={10} color="#c91e1e" /></div>
+                    }
+                    {!isMessageSending && isSentByMe && index === 0 && 
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className={`w-4 absolute -bottom-5 -right-1`}><img src={messagedelivered} /></motion.div>
                     }
                 </div>
             </div>
