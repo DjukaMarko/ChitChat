@@ -146,16 +146,19 @@ export const scrollToBottom = async (ref) => {
   const scrollContainer = ref.current;
   if (scrollContainer) {
     if (!isScrolledToBottom(ref)) {
+    
       scrollContainer.scrollTop = 0;
+      
+      await new Promise((resolve) => {
+        const checkScroll = () => {
+          if (isScrolledToBottom(ref)) {
+            scrollContainer.removeEventListener('scroll', checkScroll);
+            resolve();
+          }
+        };
+        scrollContainer.addEventListener('scroll', checkScroll);
+      });
+      
     }
   }
-
-  await new Promise((resolve) => {
-    scrollContainer.addEventListener('scroll', function checkScroll() {
-      if (scrollContainer.scrollTop === 0) {
-        scrollContainer.removeEventListener('scroll', checkScroll);
-        resolve();
-      }
-    });
-  });
 }

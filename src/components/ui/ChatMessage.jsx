@@ -2,19 +2,49 @@ import { ClipLoader } from "react-spinners";
 import { compareTimestamps, fetchDataFromLink, firebaseStoragePattern, isDifference, isValidUrl, parseFirebaseStorageLink, possibleImageFormat } from "@/lib/utils";
 import { memo, useContext, useEffect, useState } from "react";
 import { PageContext } from "../misc/PageContext";
-import { getDocs, query, where } from "firebase/firestore";
-import { auth } from "@/config/firebase";
+import { doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { auth, db } from "@/config/firebase";
 import { File } from "lucide-react";
 import messagedelivered from "@/../public/messagedelivered.png"
 import { useInView } from "react-intersection-observer";
 import { motion } from "framer-motion"
 
 export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
-    const { usersRef } = useContext(PageContext);
+    const { usersRef, activeChatData } = useContext(PageContext);
     const [userMessageData, setUserMessageData] = useState({});
     const isSentByMe = m.sentBy === auth.currentUser.uid;
     const [linkData, setLinkData] = useState({});
     const { ref, inView } = useInView();
+    const [readByUsers, setReadByUsers] = useState([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if(!m.readBy || m.readBy.length === 0) return;
+            const fetchUserDataPromises = m.readBy.filter(userId => userId !== auth.currentUser.uid).map(async userId => {
+                const userDocRef = doc(db, "users", userId);
+                try {
+                    const docSnapshot = await getDoc(userDocRef);
+                    if (docSnapshot.exists()) {
+                        return docSnapshot.data();
+                    } else {
+                        return null;
+                    }
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                    return null;
+                }
+            });
+
+            try {
+                const userDatas = await Promise.all(fetchUserDataPromises);
+                setReadByUsers(userDatas.filter(userData => userData !== null));
+            } catch (error) {
+                console.error("Error fetching user data for readBy IDs:", error);
+            }
+        };
+
+        fetchData();
+    }, [m.readBy]); // Dependency array to run the effect whenever m.readBy changes
 
 
     useEffect(() => {
@@ -45,8 +75,21 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
 
             }
         }
-        if(inView) {
+
+        let checkIfMessageRead = async () => {
+            if (m.id) {
+                if (!m.readBy.includes(auth.currentUser.uid)) {
+                    console.log(m);
+                    const messageRef = doc(db, "groups", activeChatData.id, "messages", m.id);
+                    await updateDoc(messageRef, { readBy: [...m.readBy, auth.currentUser.uid] });
+                }
+            }
+        }
+
+
+        if (inView) {
             loadLinkData();
+            checkIfMessageRead();
         }
     }, [inView]);
 
@@ -90,13 +133,24 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
                         <p className={`${isSentByMe ? "text-white" : "text-textColor"} text-sm break-words`}>{m.message}</p>
                     )}
 
-                    {isMessageSending && isSentByMe &&
-                        <div className={`absolute -bottom-6 right-0`}><ClipLoader className="w-max" size={10} color="#c91e1e" /></div>
-                    }
-                    {!isMessageSending && isSentByMe && index === 0 && 
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className={`w-4 absolute -bottom-5 -right-1`}><img src={messagedelivered} /></motion.div>
-                    }
                 </div>
+            </div>
+            {isMessageSending && isSentByMe &&
+                <div className={`w-full flex justify-end items-center p-1`}><ClipLoader size={10} color="#c91e1e" /></div>
+            }
+            {!isMessageSending && isSentByMe && index === 0 && readByUsers.length === 0 &&
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className={`w-full flex items-center justify-end p-1`}><img className="w-4" src={messagedelivered} /></motion.div>
+            }
+            <div className="w-full flex items-center justify-end -space-x-2">
+                {readByUsers.map(user => {
+                    if (index > 0) {
+                        if (text[index - 1].readBy.includes(user.userId)) {
+                            return;
+                        }
+                    }
+                    if(user.userId === m.sentBy) return;
+                    return <img key={m.id} src={user?.photoUrl} className="rounded-full w-6 p-1" />
+                })}
             </div>
         </div>
     )

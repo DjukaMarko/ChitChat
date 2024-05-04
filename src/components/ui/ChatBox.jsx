@@ -157,8 +157,9 @@ export const ChatBox = ({ hideChat }) => {
     }
 
     const sendMessage = async () => {
-        if (textValue === "" || hasOnlyBlankSpaces(textValue)) return;
+        if (textValue === "" || hasOnlyBlankSpaces(textValue) || isMessageSending) return;
         setMessageSending(true);
+        
         await scrollToBottom(scrollContainerRef);
 
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
@@ -190,7 +191,8 @@ export const ChatBox = ({ hideChat }) => {
             id: "",
             message: textValue,
             sentAt: firestoreTimestamp(),
-            sentBy: auth.currentUser.uid
+            sentBy: auth.currentUser.uid,
+            readBy: [auth.currentUser.uid]
         });
 
         await updateDoc(newMessageDoc, { id: newMessageDoc.id });

@@ -345,7 +345,11 @@ export default function HomeDashboard({ cookies }) {
     }
 
     const deleteChat = async (id) => {
-        hideChat();
+        if(isChatOpened) {
+            if(activeChatData.id === id) {
+                hideChat();
+            }
+        }
         let newGroups = myUserData.groups.filter(item => item !== id);
         await updateDoc(doc(db, "users", auth?.currentUser?.uid), {
             groups: newGroups,
