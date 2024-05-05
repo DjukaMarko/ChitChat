@@ -326,6 +326,7 @@ export default function HomeDashboard({ cookies }) {
                 lastMessage: "",
                 lastMessageSent: "",
                 lastMessageSentBy: "",
+                lastMessageReadBy: [],
                 members: [auth?.currentUser?.uid, other_user.docs[0].data().userId],
                 numMessages: 0,
             })

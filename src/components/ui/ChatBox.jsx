@@ -206,13 +206,13 @@ export const ChatBox = ({ hideChat }) => {
 
                 // Calculate the new value by incrementing by one
                 const newNumMessages = currentNumMessages + 1;
-
                 // Update the numMessages field in the document
                 transaction.update(groupRef, {
                     numMessages: newNumMessages,
                     lastMessage: textValue,
                     lastMessageSent: firestoreTimestamp(),
                     lastMessageSentBy: auth.currentUser.uid,
+                    lastMessageReadBy: [auth.currentUser.uid]
                 });
             });
 

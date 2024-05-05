@@ -79,9 +79,11 @@ export const ChatMessage = memo(({ text, m, index, isMessageSending }) => {
         let checkIfMessageRead = async () => {
             if (m.id) {
                 if (!m.readBy.includes(auth.currentUser.uid)) {
-                    console.log(m);
                     const messageRef = doc(db, "groups", activeChatData.id, "messages", m.id);
+                    const groupRef = await getDoc(doc(db, "groups", activeChatData.id));
+                    const previousLastMessageReadBy = groupRef.data().lastMessageReadBy;
                     await updateDoc(messageRef, { readBy: [...m.readBy, auth.currentUser.uid] });
+                    await updateDoc(doc(db, "groups", activeChatData.id), { lastMessageReadBy: [...previousLastMessageReadBy, auth.currentUser.uid]})
                 }
             }
         }
