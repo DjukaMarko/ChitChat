@@ -18,7 +18,7 @@ export default function GridRandomFriends({ handleSendRequest }) {
 
             const documents = [];
             for (const docSnap of snapshot.docs) {
-                if (docSnap.data().friends.includes(auth.currentUser.uid) && !docSnap.data().userId !== auth.currentUser.uid) {
+                if (!docSnap.data().friends.includes(auth.currentUser.uid) && docSnap.data().userId !== auth.currentUser.uid) {
                     documents.push({ ...docSnap.data() });
                 }
             }//!docSnap.data().friends.includes(auth.currentUser.uid) && docSnap.data().userId !== auth.currentUser.uid
